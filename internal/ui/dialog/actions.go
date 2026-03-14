@@ -110,6 +110,10 @@ type (
 		SkillContent     string
 		SkillCategory    string
 	}
+	ActionLibrariesLoaded struct {
+		Agents []CommandItem
+		Skills []CommandItem
+	}
 )
 
 // Messages for API key input dialog.

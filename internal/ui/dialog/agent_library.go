@@ -61,16 +61,18 @@ type AgentLibrary struct {
 		Category8    key.Binding
 		Category9    key.Binding
 		FocusFilter  key.Binding
+		Expand       key.Binding
 	}
 }
 
 // AgentLibraryItem represents an agent list item.
 type AgentLibraryItem struct {
-	agent   agents.AgentDefinition
-	t       *styles.Styles
-	m       fuzzy.Match
-	cache   map[int]string
-	focused bool
+	agent    agents.AgentDefinition
+	t        *styles.Styles
+	m        fuzzy.Match
+	cache    map[int]string
+	focused  bool
+	expanded bool
 }
 
 var (
@@ -134,6 +136,10 @@ func NewAgentLibrary(com *common.Common, agentsDirs []string) (*AgentLibrary, er
 	a.keyMap.FocusFilter = key.NewBinding(
 		key.WithKeys("/"),
 		key.WithHelp("/", "search"),
+	)
+	a.keyMap.Expand = key.NewBinding(
+		key.WithKeys("e"),
+		key.WithHelp("e", "expand"),
 	)
 
 	a.loadAgents(agentsDirs)
@@ -347,6 +353,16 @@ func (a *AgentLibrary) HandleMsg(msg tea.Msg) Action {
 		case key.Matches(msg, a.keyMap.FocusFilter):
 			a.input.Focus()
 
+		case key.Matches(msg, a.keyMap.Expand):
+			selectedItem := a.list.SelectedItem()
+			if selectedItem == nil {
+				break
+			}
+			if agentItem, ok := selectedItem.(*AgentLibraryItem); ok {
+				agentItem.expanded = !agentItem.expanded
+				agentItem.cache = nil // Clear cache to re-render
+			}
+
 		default:
 			var cmd tea.Cmd
 			a.input, cmd = a.input.Update(msg)
@@ -407,13 +423,19 @@ func (a *AgentLibrary) Draw(scr uv.Screen, area uv.Rectangle) *tea.Cursor {
 
 	// List
 	visibleCount := len(a.list.FilteredItems())
-	if a.list.Height() >= visibleCount {
-		a.list.ScrollToTop()
+	if visibleCount == 0 {
+		emptyView := "\n\n" + t.HalfMuted.Render("  No agents found matching your filter.") + "\n"
+		emptyView += t.HalfMuted.Render("  Try a broader term or check other categories.")
+		rc.AddPart(emptyView)
 	} else {
-		a.list.ScrollToSelected()
+		if a.list.Height() >= visibleCount {
+			a.list.ScrollToTop()
+		} else {
+			a.list.ScrollToSelected()
+		}
+		listView := t.Dialog.List.Height(a.list.Height()).Render(a.list.Render())
+		rc.AddPart(listView)
 	}
-	listView := t.Dialog.List.Height(a.list.Height()).Render(a.list.Render())
-	rc.AddPart(listView)
 
 	rc.Help = a.help.View(a)
 
@@ -495,5 +517,15 @@ func (a *AgentLibraryItem) Render(width int) string {
 		name = name + badge
 	}
 
-	return renderItem(styles, name, a.agent.Description, a.focused, width, a.cache, &a.m)
+	description := a.agent.Description
+	if a.expanded {
+		// Show preview of system prompt when expanded
+		preview := a.agent.SystemPrompt
+		if len(preview) > 300 {
+			preview = preview[:300] + "..."
+		}
+		description = description + "\n\n" + a.t.HalfMuted.Render(preview)
+	}
+
+	return renderItem(styles, name, description, a.focused, width, a.cache, &a.m)
 }

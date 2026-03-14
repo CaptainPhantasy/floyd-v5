@@ -7,14 +7,16 @@ import (
 
 // CommandItem wraps a uicmd.Command to implement the ListItem interface.
 type CommandItem struct {
-	id       string
-	title    string
-	shortcut string
-	action   Action
-	t        *styles.Styles
-	m        fuzzy.Match
-	cache    map[int]string
-	focused  bool
+	id          string
+	title       string
+	description string
+	shortcut    string
+	action      Action
+	t           *styles.Styles
+	m           fuzzy.Match
+	cache       map[int]string
+	focused     bool
+	expanded    bool
 }
 
 var _ ListItem = &CommandItem{}
@@ -30,9 +32,21 @@ func NewCommandItem(t *styles.Styles, id, title, shortcut string, action Action)
 	}
 }
 
+// NewCommandItemWithDescription creates a new CommandItem with a description.
+func NewCommandItemWithDescription(t *styles.Styles, id, title, description, shortcut string, action Action) *CommandItem {
+	return &CommandItem{
+		id:          id,
+		t:           t,
+		title:       title,
+		description: description,
+		shortcut:    shortcut,
+		action:      action,
+	}
+}
+
 // Filter implements ListItem.
 func (c *CommandItem) Filter() string {
-	return c.title
+	return c.title + " " + c.description
 }
 
 // ID implements ListItem.
@@ -78,5 +92,20 @@ func (c *CommandItem) Render(width int) string {
 		InfoTextBlurred: c.t.Base,
 		InfoTextFocused: c.t.Base,
 	}
-	return renderItem(styles, c.title, c.shortcut, c.focused, width, c.cache, &c.m)
+
+	displayTitle := c.title
+	displayDescription := c.shortcut
+
+	if c.description != "" {
+		if c.expanded {
+			displayDescription = c.description
+		} else if c.shortcut != "" {
+			displayTitle = c.title + " (" + c.shortcut + ")"
+			displayDescription = c.description
+		} else {
+			displayDescription = c.description
+		}
+	}
+
+	return renderItem(styles, displayTitle, displayDescription, c.focused, width, c.cache, &c.m)
 }

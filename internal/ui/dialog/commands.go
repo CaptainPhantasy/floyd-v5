@@ -79,6 +79,7 @@ type Commands struct {
 		Jump4,
 		Jump5,
 		Jump6,
+		Expand,
 		Close key.Binding
 	}
 
@@ -125,7 +126,7 @@ func NewCommands(com *common.Common, sessionID string, customCommands []commands
 				AgentDescription: agent.Description,
 				SystemPrompt:     agent.SystemPrompt,
 			}
-			c.agentItems = append(c.agentItems, *NewCommandItem(com.Styles, "agent_"+agent.Name, agent.Name, "", action))
+			c.agentItems = append(c.agentItems, *NewCommandItemWithDescription(com.Styles, "agent_"+agent.Name, agent.Name, agent.Description, "", action))
 		}
 	}
 
@@ -138,7 +139,7 @@ func NewCommands(com *common.Common, sessionID string, customCommands []commands
 			SkillContent:     skill.Instructions,
 			SkillCategory:    skill.Category,
 		}
-		c.skillItems = append(c.skillItems, *NewCommandItem(com.Styles, "skill_"+skill.Name, skill.Name, "", action))
+		c.skillItems = append(c.skillItems, *NewCommandItemWithDescription(com.Styles, "skill_"+skill.Name, skill.Name, skill.Description, "", action))
 	}
 
 	// Populate Plugins (MCP)
@@ -200,6 +201,7 @@ func NewCommands(com *common.Common, sessionID string, customCommands []commands
 	c.keyMap.Jump4 = key.NewBinding(key.WithKeys("alt+4"), key.WithHelp("alt+4", "agents"))
 	c.keyMap.Jump5 = key.NewBinding(key.WithKeys("alt+5"), key.WithHelp("alt+5", "skills"))
 	c.keyMap.Jump6 = key.NewBinding(key.WithKeys("alt+6"), key.WithHelp("alt+6", "plugins"))
+	c.keyMap.Expand = key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "expand"))
 	closeKey := CloseKey
 	closeKey.SetHelp("esc", "cancel")
 	c.keyMap.Close = closeKey
@@ -301,6 +303,15 @@ func (c *Commands) HandleMsg(msg tea.Msg) Action {
 			c.setCommandItems(Skills)
 		case key.Matches(msg, c.keyMap.Jump6):
 			c.setCommandItems(Plugins)
+		case key.Matches(msg, c.keyMap.Expand):
+			selectedItem := c.list.SelectedItem()
+			if selectedItem == nil {
+				break
+			}
+			if cmdItem, ok := selectedItem.(*CommandItem); ok {
+				cmdItem.expanded = !cmdItem.expanded
+				cmdItem.cache = nil // Clear cache to re-render
+			}
 		default:
 			var cmd tea.Cmd
 			for _, item := range c.list.FilteredItems() {

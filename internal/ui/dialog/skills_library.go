@@ -61,16 +61,18 @@ type SkillsLibrary struct {
 		Category8    key.Binding
 		Category9    key.Binding
 		FocusFilter  key.Binding
+		Expand       key.Binding
 	}
 }
 
 // SkillsLibraryItem represents a skill list item.
 type SkillsLibraryItem struct {
-	skill   *skills.Skill
-	t       *styles.Styles
-	m       fuzzy.Match
-	cache   map[int]string
-	focused bool
+	skill     *skills.Skill
+	t         *styles.Styles
+	m         fuzzy.Match
+	cache     map[int]string
+	focused   bool
+	expanded  bool
 }
 
 var (
@@ -134,6 +136,10 @@ func NewSkillsLibrary(com *common.Common, skillsDirs []string) (*SkillsLibrary, 
 	s.keyMap.FocusFilter = key.NewBinding(
 		key.WithKeys("/"),
 		key.WithHelp("/", "search"),
+	)
+	s.keyMap.Expand = key.NewBinding(
+		key.WithKeys("e"),
+		key.WithHelp("e", "expand"),
 	)
 
 	s.loadSkills(skillsDirs)
@@ -329,6 +335,16 @@ func (s *SkillsLibrary) HandleMsg(msg tea.Msg) Action {
 		case key.Matches(msg, s.keyMap.FocusFilter):
 			s.input.Focus()
 
+		case key.Matches(msg, s.keyMap.Expand):
+			selectedItem := s.list.SelectedItem()
+			if selectedItem == nil {
+				break
+			}
+			if skillItem, ok := selectedItem.(*SkillsLibraryItem); ok {
+				skillItem.expanded = !skillItem.expanded
+				skillItem.cache = nil // Clear cache to re-render
+			}
+
 		default:
 			var cmd tea.Cmd
 			s.input, cmd = s.input.Update(msg)
@@ -391,13 +407,19 @@ func (s *SkillsLibrary) Draw(scr uv.Screen, area uv.Rectangle) *tea.Cursor {
 
 	// List
 	visibleCount := len(s.list.FilteredItems())
-	if s.list.Height() >= visibleCount {
-		s.list.ScrollToTop()
+	if visibleCount == 0 {
+		emptyView := "\n\n" + t.HalfMuted.Render("  No skills found in this category.") + "\n"
+		emptyView += t.HalfMuted.Render("  Check extensibility/skills/ to add more.")
+		rc.AddPart(emptyView)
 	} else {
-		s.list.ScrollToSelected()
+		if s.list.Height() >= visibleCount {
+			s.list.ScrollToTop()
+		} else {
+			s.list.ScrollToSelected()
+		}
+		listView := t.Dialog.List.Height(s.list.Height()).Render(s.list.Render())
+		rc.AddPart(listView)
 	}
-	listView := t.Dialog.List.Height(s.list.Height()).Render(s.list.Render())
-	rc.AddPart(listView)
 
 	rc.Help = s.help.View(s)
 
@@ -470,5 +492,15 @@ func (s *SkillsLibraryItem) Render(width int) string {
 		name = name + badge
 	}
 
-	return renderItem(styles, name, s.skill.Description, s.focused, width, s.cache, &s.m)
+	description := s.skill.Description
+	if s.expanded {
+		// Show preview of skill instructions when expanded
+		preview := s.skill.Instructions
+		if len(preview) > 300 {
+			preview = preview[:300] + "..."
+		}
+		description = description + "\n\n" + s.t.HalfMuted.Render(preview)
+	}
+
+	return renderItem(styles, name, description, s.focused, width, s.cache, &s.m)
 }
