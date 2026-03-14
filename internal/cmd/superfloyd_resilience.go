@@ -137,16 +137,47 @@ func ShowContextSummary() {
 	cwd, _ := os.Getwd()
 	fmt.Printf("\n[superfloyd-eye] Context Singularity initialized in %s\n", cwd)
 
-	// Simple heuristic for "density"
+	// Simple heuristic for "density" with safety limits
 	files := 0
-	_ = filepath.Walk(cwd, func(path string, info os.FileInfo, err error) error {
-		if err == nil && !info.IsDir() && !strings.Contains(path, "/.") {
-			files++
+	maxFiles := 10000
+	start := time.Now()
+
+	_ = filepath.WalkDir(cwd, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return filepath.SkipDir
 		}
+
+		// Optimization: skip common massive directories and hidden ones
+		if d.IsDir() {
+			name := d.Name()
+			if strings.HasPrefix(name, ".") ||
+				name == "node_modules" ||
+				name == "vendor" ||
+				name == "dist" ||
+				name == "bin" ||
+				name == "Library" ||
+				name == "Applications" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		files++
+
+		// Safety: stop if we hit too many files or take too long (2s)
+		if files >= maxFiles || time.Since(start) > 2*time.Second {
+			return fmt.Errorf("limit reached")
+		}
+
 		return nil
 	})
 
-	fmt.Printf("[superfloyd-eye] Target Density: %d active components detected\n", files)
+	plus := ""
+	if files >= maxFiles {
+		plus = "+"
+	}
+
+	fmt.Printf("[superfloyd-eye] Target Density: %d%s active components detected\n", files, plus)
 	fmt.Printf("[superfloyd-eye] Paranoia State: Zero-Branch Determinism Active\n\n")
 }
 
