@@ -3189,7 +3189,9 @@ func (m *UI) openCommandsDialog() tea.Cmd {
 		sessionID = m.session.ID
 	}
 
-	commands, err := dialog.NewCommands(m.com, sessionID, m.customCommands, m.mcpPrompts)
+	agentsDirs := config.GlobalAgentsDirs()
+	skillsDirs := config.GlobalSkillsDirs()
+	commands, err := dialog.NewCommands(m.com, sessionID, m.customCommands, m.mcpPrompts, agentsDirs, skillsDirs)
 	if err != nil {
 		return util.ReportError(err)
 	}
@@ -3727,8 +3729,10 @@ func (m *UI) copyChatHighlight() tea.Cmd {
 // but not focused, it gives it focus. If closed, it spawns a new PTY
 // session.
 func (m *UI) toggleTerminal(index int) tea.Cmd {
+	// Pro-Active Transition: If not in chat mode, move there automatically.
 	if m.state != uiChat {
-		return util.ReportInfo("Terminal is available in the chat view")
+		m.state = uiChat
+		m.updateLayoutAndSize()
 	}
 
 	targetIdx := index - 1

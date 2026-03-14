@@ -2,6 +2,7 @@ package dialog
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"charm.land/bubbles/v2/help"
@@ -11,6 +12,7 @@ import (
 	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/sahilm/fuzzy"
 
+	"github.com/legacy-ai/floyd/internal/agent/tools/mcp"
 	"github.com/legacy-ai/floyd/internal/ui/common"
 	"github.com/legacy-ai/floyd/internal/ui/list"
 	"github.com/legacy-ai/floyd/internal/ui/styles"
@@ -28,6 +30,7 @@ type PluginStatus int
 
 const (
 	PluginStatusConnected PluginStatus = iota
+	PluginStatusConfigured
 	PluginStatusAvailable
 	PluginStatusError
 )
@@ -39,6 +42,7 @@ type PluginInfo struct {
 	Status      PluginStatus
 	ToolsCount  int
 	Error       string
+	Type        string // stdio, http, etc.
 }
 
 // PluginsLibrary represents a dialog for managing plugins (MCP servers).
@@ -49,7 +53,7 @@ type PluginsLibrary struct {
 	input   textinput.Model
 	plugins []PluginInfo
 
-	// Category system (Connected/Available)
+	// Category system
 	categories       []string
 	selectedCategory int
 
@@ -98,7 +102,7 @@ func NewPluginsLibrary(com *common.Common) (*PluginsLibrary, error) {
 	p.input.Focus()
 
 	// Categories for plugins
-	p.categories = []string{"All", "Connected", "Available"}
+	p.categories = []string{"All", "Connected", "Configured", "Available"}
 	p.selectedCategory = 0
 
 	// Key bindings
@@ -121,11 +125,11 @@ func NewPluginsLibrary(com *common.Common) (*PluginsLibrary, error) {
 	p.keyMap.Close = CloseKey
 	p.keyMap.CategoryNext = key.NewBinding(
 		key.WithKeys("tab"),
-		key.WithHelp("tab", "next category"),
+		key.WithHelp("tab", "next cat"),
 	)
 	p.keyMap.CategoryPrev = key.NewBinding(
 		key.WithKeys("shift+tab"),
-		key.WithHelp("⇧+tab", "prev category"),
+		key.WithHelp("⇧+tab", "prev cat"),
 	)
 	p.keyMap.FocusFilter = key.NewBinding(
 		key.WithKeys("/"),
@@ -133,7 +137,7 @@ func NewPluginsLibrary(com *common.Common) (*PluginsLibrary, error) {
 	)
 	p.keyMap.Connect = key.NewBinding(
 		key.WithKeys("c"),
-		key.WithHelp("c", "connect"),
+		key.WithHelp("c", "configure"),
 	)
 
 	p.loadPlugins()
@@ -141,15 +145,59 @@ func NewPluginsLibrary(com *common.Common) (*PluginsLibrary, error) {
 	return p, nil
 }
 
-// loadPlugins loads plugin information.
+// loadPlugins loads plugin information from the actual configuration.
 func (p *PluginsLibrary) loadPlugins() {
-	// TODO: Load actual MCP server status from config
-	// For now, placeholder data
-	p.plugins = []PluginInfo{
-		{Name: "filesystem", Description: "File system operations (read, write, search)", Status: PluginStatusConnected, ToolsCount: 8},
-		{Name: "github", Description: "GitHub API integration (repos, issues, PRs)", Status: PluginStatusAvailable},
-		{Name: "postgres", Description: "PostgreSQL database operations", Status: PluginStatusConnected, ToolsCount: 5},
+	p.plugins = []PluginInfo{}
+	cfg := p.com.Config()
+
+	// Get live tool counts from MCP registry
+	toolCounts := make(map[string]int)
+	for name, tools := range mcp.Tools() {
+		toolCounts[name] = len(tools)
 	}
+
+	// 1. Load from configured MCP servers
+	for name, mcpCfg := range cfg.MCP {
+		count := toolCounts[name]
+		status := PluginStatusConfigured
+		if count > 0 {
+			status = PluginStatusConnected
+		}
+		
+		p.plugins = append(p.plugins, PluginInfo{
+			Name:        name,
+			Description: fmt.Sprintf("MCP Server (%s)", mcpCfg.Type),
+			Status:      status,
+			Type:        string(mcpCfg.Type),
+			ToolsCount:  count,
+		})
+	}
+
+	// 2. Add "Available" suggestions (standard MCP servers the user might want)
+	available := []PluginInfo{
+		{Name: "google-maps", Description: "Search and navigate geographical data", Status: PluginStatusAvailable},
+		{Name: "slack", Description: "Interact with Slack channels and messages", Status: PluginStatusAvailable},
+		{Name: "linear", Description: "Manage Linear issues and projects", Status: PluginStatusAvailable},
+	}
+
+	for _, avail := range available {
+		// Only add if not already configured
+		found := false
+		for _, conf := range p.plugins {
+			if conf.Name == avail.Name {
+				found = true
+				break
+			}
+		}
+		if !found {
+			p.plugins = append(p.plugins, avail)
+		}
+	}
+
+	// Sort by name
+	sort.Slice(p.plugins, func(i, j int) bool {
+		return p.plugins[i].Name < p.plugins[j].Name
+	})
 
 	p.updateListItems()
 }
@@ -158,20 +206,21 @@ func (p *PluginsLibrary) loadPlugins() {
 func (p *PluginsLibrary) updateListItems() {
 	var filtered []PluginInfo
 
-	switch p.selectedCategory {
-	case 0: // All
-		filtered = p.plugins
-	case 1: // Connected
-		for _, plugin := range p.plugins {
-			if plugin.Status == PluginStatusConnected {
-				filtered = append(filtered, plugin)
-			}
+	for _, plugin := range p.plugins {
+		match := false
+		switch p.selectedCategory {
+		case 0: // All
+			match = true
+		case 1: // Connected
+			match = plugin.Status == PluginStatusConnected
+		case 2: // Configured
+			match = plugin.Status == PluginStatusConfigured || plugin.Status == PluginStatusConnected
+		case 3: // Available
+			match = plugin.Status == PluginStatusAvailable
 		}
-	case 2: // Available
-		for _, plugin := range p.plugins {
-			if plugin.Status == PluginStatusAvailable {
-				filtered = append(filtered, plugin)
-			}
+
+		if match {
+			filtered = append(filtered, plugin)
 		}
 	}
 
@@ -195,7 +244,6 @@ func (p *PluginsLibrary) categoryTabBar(width int) string {
 
 	for i, cat := range p.categories {
 		var tab string
-
 		if i == p.selectedCategory {
 			tab = t.Base.Render("● ") + t.Base.Bold(true).Render(cat)
 		} else {
@@ -307,21 +355,15 @@ func (p *PluginsLibrary) Draw(scr uv.Screen, area uv.Rectangle) *tea.Cursor {
 	p.help.SetWidth(innerWidth)
 
 	rc := NewRenderContext(t, width)
-
-	// Title
-	totalCount := len(p.plugins)
 	rc.Title = "Plugins (MCP Servers)"
-	rc.TitleInfo = t.HalfMuted.Render(strings.Join([]string{"", string(rune(countDigits(totalCount))), " plugins"}, ""))
+	rc.TitleInfo = t.HalfMuted.Render(fmt.Sprintf(" %d active", len(p.plugins)))
 
-	// Category tab bar
 	categoryBar := p.categoryTabBar(innerWidth)
 	rc.AddPart(categoryBar)
 
-	// Filter input
 	inputView := t.Dialog.InputPrompt.Render(p.input.View())
 	rc.AddPart(inputView)
 
-	// List
 	visibleCount := len(p.list.FilteredItems())
 	if p.list.Height() >= visibleCount {
 		p.list.ScrollToTop()
@@ -354,7 +396,7 @@ func (p *PluginsLibrary) ShortHelp() []key.Binding {
 func (p *PluginsLibrary) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{p.keyMap.Select, p.keyMap.Next, p.keyMap.Previous, p.keyMap.FocusFilter},
-		{p.keyMap.CategoryNext, p.keyMap.CategoryPrev, p.keyMap.Connect, p.keyMap.Close},
+		{p.keyMap.CategoryNext, p.keyMap.CategoryPrev, p.keyMap.Close},
 	}
 }
 
@@ -391,27 +433,29 @@ func (p *PluginsLibraryItem) Render(width int) string {
 		InfoTextFocused: p.t.Base,
 	}
 
-	// Status indicator
 	var statusIcon string
 	switch p.plugin.Status {
 	case PluginStatusConnected:
 		statusIcon = p.t.Base.Foreground(p.t.GreenLight).Render("● ")
 	case PluginStatusAvailable:
 		statusIcon = p.t.HalfMuted.Render("○ ")
+	case PluginStatusConfigured:
+		statusIcon = p.t.Base.Foreground(p.t.BlueLight).Render("○ ")
 	case PluginStatusError:
 		statusIcon = p.t.Base.Foreground(p.t.Error).Render("✗ ")
 	}
 
 	name := statusIcon + p.plugin.Name
-
-	// Show tool count for connected plugins
-	if p.focused && p.plugin.Status == PluginStatusConnected && p.plugin.ToolsCount > 0 {
-		toolCount := fmt.Sprintf("%d tools", p.plugin.ToolsCount)
-		badge := p.t.Subtle.Render(" [" + toolCount + "]")
-		name = name + badge
+	desc := p.plugin.Description
+	if p.plugin.Type != "" {
+		desc = fmt.Sprintf("[%s] %s", p.plugin.Type, desc)
 	}
 
-	return renderItem(styles, name, p.plugin.Description, p.focused, width, p.cache, &p.m)
+	if p.plugin.ToolsCount > 0 {
+		desc = fmt.Sprintf("%s (%d tools)", desc, p.plugin.ToolsCount)
+	}
+
+	return renderItem(styles, name, desc, p.focused, width, p.cache, &p.m)
 }
 
 // ActionSelectPlugin is a message indicating a plugin has been selected.

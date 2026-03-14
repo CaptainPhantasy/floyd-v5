@@ -11,8 +11,10 @@ import (
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	uv "github.com/charmbracelet/ultraviolet"
+	"github.com/legacy-ai/floyd/internal/agents"
 	"github.com/legacy-ai/floyd/internal/commands"
 	"github.com/legacy-ai/floyd/internal/config"
+	"github.com/legacy-ai/floyd/internal/skills"
 	"github.com/legacy-ai/floyd/internal/ui/common"
 	"github.com/legacy-ai/floyd/internal/ui/list"
 	"github.com/legacy-ai/floyd/internal/ui/styles"
@@ -46,8 +48,8 @@ func (c CommandType) String() string {
 
 const (
 	sidebarCompactModeBreakpoint   = 120
-	defaultCommandsDialogMaxHeight = 20
-	defaultCommandsDialogMaxWidth  = 70
+	defaultCommandsDialogMaxHeight = 32
+	defaultCommandsDialogMaxWidth  = 100
 )
 
 const (
@@ -71,6 +73,12 @@ type Commands struct {
 		ThemePrev,
 		Tab,
 		ShiftTab,
+		Jump1,
+		Jump2,
+		Jump3,
+		Jump4,
+		Jump5,
+		Jump6,
 		Close key.Binding
 	}
 
@@ -96,16 +104,47 @@ type Commands struct {
 var _ Dialog = (*Commands)(nil)
 
 // NewCommands creates a new commands dialog.
-func NewCommands(com *common.Common, sessionID string, customCommands []commands.CustomCommand, mcpPrompts []commands.MCPPrompt) (*Commands, error) {
+func NewCommands(com *common.Common, sessionID string, customCommands []commands.CustomCommand, mcpPrompts []commands.MCPPrompt, agentsDirs []string, skillsDirs []string) (*Commands, error) {
 	c := &Commands{
 		com:            com,
 		selected:       SystemCommands,
 		sessionID:      sessionID,
 		customCommands: customCommands,
 		mcpPrompts:     mcpPrompts,
-		agentItems:     []CommandItem{},  // Initialize agent items
-		skillItems:     []CommandItem{},  // Initialize skill items
-		pluginItems:    []CommandItem{},  // Initialize plugin items
+		agentItems:     []CommandItem{},
+		skillItems:     []CommandItem{},
+		pluginItems:    []CommandItem{},
+	}
+
+	// Populate Agents
+	for _, dir := range agentsDirs {
+		loaded, _ := agents.LoadAgents(dir)
+		for _, agent := range loaded {
+			action := ActionSelectAgent{
+				AgentName:        agent.Name,
+				AgentDescription: agent.Description,
+				SystemPrompt:     agent.SystemPrompt,
+			}
+			c.agentItems = append(c.agentItems, *NewCommandItem(com.Styles, "agent_"+agent.Name, agent.Name, "", action))
+		}
+	}
+
+	// Populate Skills
+	loadedSkills := skills.Discover(skillsDirs)
+	for _, skill := range loadedSkills {
+		action := ActionSelectSkill{
+			SkillName:        skill.Name,
+			SkillDescription: skill.Description,
+			SkillContent:     skill.Instructions,
+			SkillCategory:    skill.Category,
+		}
+		c.skillItems = append(c.skillItems, *NewCommandItem(com.Styles, "skill_"+skill.Name, skill.Name, "", action))
+	}
+
+	// Populate Plugins (MCP)
+	for name, mcpCfg := range com.Config().MCP {
+		action := ActionOpenDialog{MCPServersID} // Shortcut to MCP manager
+		c.pluginItems = append(c.pluginItems, *NewCommandItem(com.Styles, "mcp_"+name, name, string(mcpCfg.Type), action))
 	}
 
 	help := help.New()
@@ -155,6 +194,12 @@ func NewCommands(com *common.Common, sessionID string, customCommands []commands
 		key.WithKeys("shift+tab"),
 		key.WithHelp("shift+tab", "switch selection prev"),
 	)
+	c.keyMap.Jump1 = key.NewBinding(key.WithKeys("alt+1"), key.WithHelp("alt+1", "system"))
+	c.keyMap.Jump2 = key.NewBinding(key.WithKeys("alt+2"), key.WithHelp("alt+2", "user"))
+	c.keyMap.Jump3 = key.NewBinding(key.WithKeys("alt+3"), key.WithHelp("alt+3", "mcp"))
+	c.keyMap.Jump4 = key.NewBinding(key.WithKeys("alt+4"), key.WithHelp("alt+4", "agents"))
+	c.keyMap.Jump5 = key.NewBinding(key.WithKeys("alt+5"), key.WithHelp("alt+5", "skills"))
+	c.keyMap.Jump6 = key.NewBinding(key.WithKeys("alt+6"), key.WithHelp("alt+6", "plugins"))
 	closeKey := CloseKey
 	closeKey.SetHelp("esc", "cancel")
 	c.keyMap.Close = closeKey
@@ -240,6 +285,22 @@ func (c *Commands) HandleMsg(msg tea.Msg) Action {
 				c.selected = c.previousCommandType()
 				c.setCommandItems(c.selected)
 			}
+		case key.Matches(msg, c.keyMap.Jump1):
+			c.setCommandItems(SystemCommands)
+		case key.Matches(msg, c.keyMap.Jump2):
+			if len(c.customCommands) > 0 {
+				c.setCommandItems(UserCommands)
+			}
+		case key.Matches(msg, c.keyMap.Jump3):
+			if len(c.mcpPrompts) > 0 {
+				c.setCommandItems(MCPPrompts)
+			}
+		case key.Matches(msg, c.keyMap.Jump4):
+			c.setCommandItems(Agents)
+		case key.Matches(msg, c.keyMap.Jump5):
+			c.setCommandItems(Skills)
+		case key.Matches(msg, c.keyMap.Jump6):
+			c.setCommandItems(Plugins)
 		default:
 			var cmd tea.Cmd
 			for _, item := range c.list.FilteredItems() {
@@ -265,39 +326,33 @@ func (c *Commands) Cursor() *tea.Cursor {
 	return InputCursor(c.com.Styles, c.input.Cursor())
 }
 
-// commandsRadioView generates the command type selector radio buttons.
-func commandsRadioView(sty *styles.Styles, selected CommandType, hasUserCmds bool, hasMCPPrompts bool) string {
-	// Calculate if we have extensibility loaded (for the UI)
-	// Since this is UI rendering, we'll check based on our knowledge of the system
-	// that agents, skills, and plugins exist
-	
-	hasExtensibility := true // Always show these tabs since they're loaded from the index
+// commandsRadioView generates the command type selector radio buttons with counts.
+func (c *Commands) commandsRadioView(sty *styles.Styles) string {
+	hasUserCmds := len(c.customCommands) > 0
+	hasMCPPrompts := len(c.mcpPrompts) > 0
 
-	if !hasUserCmds && !hasMCPPrompts && !hasExtensibility {
-		return ""
-	}
-
-	selectedFn := func(t CommandType) string {
-		if t == selected {
-			return sty.RadioOn.Padding(0, 1).Render() + sty.HalfMuted.Render(t.String())
+	selectedFn := func(t CommandType, label string) string {
+		if t == c.selected {
+			return sty.RadioOn.Padding(0, 1).Render() + sty.Base.Bold(true).Render(label)
 		}
-		return sty.RadioOff.Padding(0, 1).Render() + sty.HalfMuted.Render(t.String())
+		return sty.RadioOff.Padding(0, 1).Render() + sty.HalfMuted.Render(label)
 	}
 
 	parts := []string{
-		selectedFn(SystemCommands),
+		selectedFn(SystemCommands, "System"),
 	}
 
 	if hasUserCmds {
-		parts = append(parts, selectedFn(UserCommands))
+		parts = append(parts, selectedFn(UserCommands, fmt.Sprintf("User (%d)", len(c.customCommands))))
 	}
 	if hasMCPPrompts {
-		parts = append(parts, selectedFn(MCPPrompts))
+		parts = append(parts, selectedFn(MCPPrompts, fmt.Sprintf("MCP (%d)", len(c.mcpPrompts))))
 	}
-	// Always include Agents, Skills, Plugins tabs since they're available from index
-	parts = append(parts, selectedFn(Agents))
-	parts = append(parts, selectedFn(Skills)) 
-	parts = append(parts, selectedFn(Plugins))
+
+	// Always include Agents, Skills, Plugins tabs
+	parts = append(parts, selectedFn(Agents, "Agents"))
+	parts = append(parts, selectedFn(Skills, "Skills"))
+	parts = append(parts, selectedFn(Plugins, "Plugins"))
 
 	return strings.Join(parts, " ")
 }
@@ -327,7 +382,7 @@ func (c *Commands) Draw(scr uv.Screen, area uv.Rectangle) *tea.Cursor {
 
 	rc := NewRenderContext(t, width)
 	rc.Title = "Commands"
-	rc.TitleInfo = commandsRadioView(t, c.selected, len(c.customCommands) > 0, len(c.mcpPrompts) > 0)
+	rc.TitleInfo = c.commandsRadioView(t)
 	inputView := t.Dialog.InputPrompt.Render(c.input.View())
 	rc.AddPart(inputView)
 	listView := t.Dialog.List.Height(c.list.Height()).Render(c.list.Render())
@@ -446,6 +501,18 @@ func (c *Commands) setCommandItems(commandType CommandType) {
 				Arguments:   cmd.Arguments,
 			}
 			commandItems = append(commandItems, NewCommandItem(c.com.Styles, "mcp_"+cmd.ID, cmd.PromptID, "", action))
+		}
+	case Agents:
+		for i := range c.agentItems {
+			commandItems = append(commandItems, &c.agentItems[i])
+		}
+	case Skills:
+		for i := range c.skillItems {
+			commandItems = append(commandItems, &c.skillItems[i])
+		}
+	case Plugins:
+		for i := range c.pluginItems {
+			commandItems = append(commandItems, &c.pluginItems[i])
 		}
 	}
 
