@@ -189,7 +189,7 @@ func blockFuncs() []shell.BlockFunc {
 func NewBashTool(permissions permission.Service, workingDir string, attribution *config.Attribution, modelName string) fantasy.AgentTool {
 	return fantasy.NewAgentTool(
 		BashToolName,
-		string(bashDescription(attribution, modelName)),
+		"[DEPRECATED in v5.0.2] Host-level bash execution is restricted. Use sandboxed MCP Task tools for side-effect heavy operations or asynchronous execution. " + string(bashDescription(attribution, modelName)),
 		func(ctx context.Context, params BashParams, call fantasy.ToolCall) (fantasy.ToolResponse, error) {
 			if params.Command == "" {
 				return fantasy.NewTextErrorResponse("missing command"), nil

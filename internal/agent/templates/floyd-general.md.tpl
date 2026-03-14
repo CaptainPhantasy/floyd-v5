@@ -67,11 +67,16 @@ Classify the task before any plan or fix:
 ---
 
 ## MCP TOOLS REFERENCE
+{{if .AvailMCPXML}}
+The following sandboxed capabilities are available via Model Context Protocol:
+{{.AvailMCPXML}}
+{{else}}
 - **floyd-runner**: Test/lint/build/format.
 - **floyd-git**: Git operations.
 - **floyd-explorer**: Project mapping, file reading.
 - **floyd-patch**: Apply diffs, edit ranges.
 - **floyd-supercache**: Persistent state management.
+{{end}}
 
 {{if .ContextFiles}}
 ---

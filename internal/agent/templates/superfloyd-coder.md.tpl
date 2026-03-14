@@ -66,11 +66,16 @@ Every code output MUST satisfy:
 ---
 
 ## MCP TOOLS REFERENCE
+{{if .AvailMCPXML}}
+The following sandboxed capabilities are available via Model Context Protocol:
+{{.AvailMCPXML}}
+{{else}}
 - **floyd-runner**: High-speed test/lint/build.
 - **floyd-git**: Advanced git operations (bisect, squash).
 - **floyd-explorer**: Symbol extraction, dependency graphs.
 - **floyd-patch**: Exact string matching & surgical edits.
 - **floyd-supercache**: Persistent reasoning state.
+{{end}}
 
 {{if .ContextFiles}}
 ---

@@ -8,11 +8,40 @@ import (
 	"log/slog"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/legacy-ai/floyd/internal/config"
 	"github.com/legacy-ai/floyd/internal/csync"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
+
+// TaskStatus represents the status of an async MCP task.
+type TaskStatus string
+
+const (
+	TaskStatusPending   TaskStatus = "pending"
+	TaskStatusRunning   TaskStatus = "running"
+	TaskStatusCompleted TaskStatus = "completed"
+	TaskStatusFailed    TaskStatus = "failed"
+)
+
+// Task represents a long-running sandboxed job (SEP-1686).
+type Task struct {
+	ID        string
+	Server    string
+	Tool      string
+	Status    TaskStatus
+	Result    *ToolResult
+	Error     error
+	CreatedAt time.Time
+}
+
+var activeTasks = csync.NewMap[string, *Task]()
+
+// GetTask returns the current status of an async task.
+func GetTask(id string) (*Task, bool) {
+	return activeTasks.Get(id)
+}
 
 type Tool = mcp.Tool
 
@@ -164,4 +193,35 @@ func filterDisabledTools(mcpName string, tools []*Tool) []*Tool {
 		}
 	}
 	return filtered
+}
+
+// ToPromptXML generates XML for injection into the system prompt.
+func ToPromptXML() string {
+	var sb strings.Builder
+	first := true
+	for name, tools := range allTools.Seq2() {
+		if len(tools) == 0 {
+			continue
+		}
+		if first {
+			sb.WriteString("<mcp_servers>\n")
+			first = false
+		}
+		fmt.Fprintf(&sb, "  <server name=%q>\n", escape(name))
+		for _, t := range tools {
+			fmt.Fprintf(&sb, "    <tool name=%q>\n", escape(t.Name))
+			fmt.Fprintf(&sb, "      <description>%s</description>\n", escape(t.Description))
+			sb.WriteString("    </tool>\n")
+		}
+		sb.WriteString("  </server>\n")
+	}
+	if !first {
+		sb.WriteString("</mcp_servers>")
+	}
+	return sb.String()
+}
+
+func escape(s string) string {
+	r := strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;", "\"", "&quot;", "'", "&apos;")
+	return r.Replace(s)
 }

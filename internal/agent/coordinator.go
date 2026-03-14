@@ -128,6 +128,12 @@ func (c *coordinator) Run(ctx context.Context, sessionID string, prompt string, 
 		return nil, fmt.Errorf("failed to update models: %w", err)
 	}
 
+	// v5.0.2: Dynamic Tool Discovery Registry Query
+	// Query the local MCP registry to map available sandboxed capabilities
+	slog.Info("v5.0.2: Performing dynamic tool discovery for sandboxed environment")
+	mcpTools := tools.GetMCPTools(c.permissions, c.cfg.WorkingDir())
+	slog.Debug("Discovered sandboxed tools", "count", len(mcpTools))
+
 	model := c.currentAgent.Model()
 	maxTokens := model.CatwalkCfg.DefaultMaxTokens
 	if model.ModelCfg.MaxTokens != 0 {
@@ -431,6 +437,7 @@ func (c *coordinator) buildTools(ctx context.Context, agent config.Agent) ([]fan
 
 	allTools = append(allTools,
 		tools.NewBashTool(c.permissions, c.cfg.WorkingDir(), c.cfg.Options.Attribution, modelName),
+		tools.NewMCPTaskStatusTool(),
 		tools.NewJobOutputTool(),
 		tools.NewJobKillTool(),
 		tools.NewDownloadTool(c.permissions, c.cfg.WorkingDir(), nil),

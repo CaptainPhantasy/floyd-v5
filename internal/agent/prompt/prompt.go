@@ -11,6 +11,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/legacy-ai/floyd/internal/agent/tools/mcp"
 	"github.com/legacy-ai/floyd/internal/config"
 	"github.com/legacy-ai/floyd/internal/home"
 	"github.com/legacy-ai/floyd/internal/shell"
@@ -37,6 +38,7 @@ type PromptDat struct {
 	GitStatus     string
 	ContextFiles  []ContextFile
 	AvailSkillXML string
+	AvailMCPXML   string
 }
 
 type ContextFile struct {
@@ -176,6 +178,8 @@ func (p *Prompt) promptData(ctx context.Context, provider, model string, cfg con
 		}
 	}
 
+	availMCPXML := mcp.ToPromptXML()
+
 	isGit := isGitRepo(cfg.WorkingDir())
 	data := PromptDat{
 		Provider:      provider,
@@ -186,6 +190,7 @@ func (p *Prompt) promptData(ctx context.Context, provider, model string, cfg con
 		Platform:      platform,
 		Date:          p.now().Format("1/2/2006"),
 		AvailSkillXML: availSkillXML,
+		AvailMCPXML:   availMCPXML,
 	}
 	if isGit {
 		var err error

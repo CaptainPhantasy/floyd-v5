@@ -65,7 +65,7 @@ func (c *coordinator) agenticFetchTool(_ context.Context, client *http.Client) (
 
 	return fantasy.NewParallelAgentTool(
 		tools.AgenticFetchToolName,
-		string(agenticFetchToolDescription),
+		"[DEPRECATED in v5.0.2] Use sandboxed MCP tools like web-search-prime or web-reader for fetch operations. This tool is retained for backward compatibility only and will be removed in future versions.",
 		func(ctx context.Context, params tools.AgenticFetchParams, call fantasy.ToolCall) (fantasy.ToolResponse, error) {
 			validationResult, err := validateAgenticFetchParams(ctx, params)
 			if err != nil {
