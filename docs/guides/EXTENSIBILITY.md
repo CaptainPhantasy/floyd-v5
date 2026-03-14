@@ -39,29 +39,37 @@ This guide covers three powerful extensibility mechanisms in Floyd that let you 
 │    SKILLS       │    AGENTS       │              PLUGINS                    │
 │    ───────      │    ──────       │              ───────                    │
 │                 │                 │                                         │
-│  Single-purpose │  Pre-configured │  Complete capability packages           │
-│  instruction    │  tool access    │                                         │
-│  sets           │  levels         │  • Skills (instructions)                │
-│                 │                 │  • Slash commands                       │
-│  "How to do X"  │  "What tools    │  • Sub-agent definitions                │
-│                 │   are allowed"  │  • Connector references                 │
+│  Single-purpose │  Pre-configured │  MCP Server Integrations                │
+│  instruction    │  persona and    │                                         │
+│  sets           │  tool access    │  • Model Context Protocol               │
+│                 │                 │  • External Tool Access                 │
+│  "How to do X"  │  "What role to  │  • Resource Bridging                    │
+│                 │   embody"       │  • Real-time Status                     │
 │                 │                 │                                         │
 ├─────────────────┼─────────────────┼─────────────────────────────────────────┤
-│  SKILL.md       │  Agent Library  │  PLUGIN.md                              │
-│  (YAML + MD)    │  (.md files)    │  (YAML + MD)                            │
+│  SKILL.md       │  Agent Library  │  MCP Registry                           │
+│  (YAML + MD)    │  (.md files)    │  (via floyd.json)                       │
 ├─────────────────┼─────────────────┼─────────────────────────────────────────┤
-│  ~/.config/     │  ~/.config/     │  ~/.config/                             │
-│  floyd/skills/  │  floyd/agents/  │  floyd/plugins/                         │
+│  20+ Core       │  90+ Domain     │  Active/Available                       │
+│  Library        │  Specialists    │  Monitoring                             │
 └─────────────────┴─────────────────┴─────────────────────────────────────────┘
 ```
 
-| Feature | Skills | Agents | Plugins |
-|---------|--------|--------|----------|
-| **Purpose** | Teach Floyd specialized knowledge | Configure tool/model access | Bundle complete workflows |
-| **Scope** | Single domain/task | Session-level configuration | Multi-component packages |
-| **Components** | Instructions only | Tools, MCPs, model selection | Skills + Commands + Agents + Connectors |
-| **File Format** | `SKILL.md` | `.md` (Agent Library) | `PLUGIN.md` |
-| **Best For** | Domain expertise | Role-based restrictions | Workflow automation |
+---
+
+## The Unified Library System
+
+In v5.0.1, Floyd introduces a unified category-based UI for browsing all extensibility components. Use `ctrl+p` (Command Palette) or the dedicated library dialogs to browse by domain.
+
+### Navigation Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `Tab` | Cycle Categories |
+| `Alt+1..6` | Direct Jump to Domain (Commands, Agents, Skills, etc.) |
+| `0..9` | Jump to specific Category |
+| `e` | Expand/Collapse Description Preview |
+| `/` | Focus Search Filter |
 
 ---
 
@@ -69,7 +77,56 @@ This guide covers three powerful extensibility mechanisms in Floyd that let you 
 
 ### What are Skills?
 
-Skills are reusable instruction sets that teach Floyd how to handle specific tasks or domains. They follow the [Agent Skills Open Standard](https://agentskills.io).
+Skills are reusable instruction sets that teach Floyd how to handle specific tasks or domains. They follow the [Agent Skills Open Standard](https://agentskills.io). Floyd v5.0.1 ships with **20 core skills** pre-installed.
+
+### Categories (Alt+5)
+
+1. **Git**: `git-commit`, `git-diff-expert`
+2. **Testing**: `test-write-go`, `test-coverage-fix`
+3. **Linting**: `lint-fix-go`, `dependency-unused-cleanup`
+4. **Refactoring**: `refactor-extract`, `dry-logic-unifier`
+5. **Documentation**: `doc-readme-gen`, `changelog-autogen`
+6. **Deployment**: `dockerfile-pro`, `github-action-ci`
+7. **Security**: `security-audit-checklist`
+8. **Data**: `migration-create-sql`
+9. **Debugging**: `debug-breakpoint-inject`, `log-trace-analysis`
+10. **DX**: `env-validate`
+
+---
+
+## Agents
+
+### What are Agents?
+
+Agents are pre-configured personas with specific tool access levels and model settings. Floyd v5.0.1 includes **90 production-ready agents** categorized for frictionless discovery.
+
+### Domain Specialization (Alt+4)
+
+- **Architecture**: System Behavior Mappers, Monorepo Cartographers.
+- **Infrastructure**: Git Stewards, Deployment Orchestrators.
+- **Orchestration**: Swarm Coordinators, Type-Error Orchestrators.
+- **Coding**: SuperFloyd SOTA Coder, Force Multiplier Architect.
+- **Security**: Compliance Enforcers, Legal Shield Agents.
+- **Quality**: Code Reviewers, Usability Inspectors.
+- **Monitoring**: Incident Analysts, Postmortem Synthesizers.
+
+---
+
+## Plugins (MCP Servers)
+
+### What are Plugins?
+
+Plugins in Floyd are **MCP (Model Context Protocol) Servers**. They bridge the gap between Floyd's reasoning and your external tools (GitHub, Slack, Databases, etc.).
+
+### Categories (Alt+6)
+
+- **Connected**: Actively running and providing tools to the current session.
+- **Configured**: Defined in your `floyd.json` but not yet active.
+- **Available**: Suggested community plugins for instant integration.
+
+### Persistent Terminal
+
+The Terminal is now a first-class feature available at the top of your **System Commands (Alt+1)**. It is persistent, multiplexed, and bypasses agent restrictions for direct manual control.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
