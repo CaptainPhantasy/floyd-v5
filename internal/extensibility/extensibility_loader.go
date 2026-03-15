@@ -110,7 +110,7 @@ func LoadIndex(indexPath string) ([]IndexEntry, error) {
 					locStart := strings.Index(line, "Location:")
 					var path string
 					if locStart != -1 {
-						path = strings.TrimSpace(nameLine[locStart+9:) // 9 for "Location: "
+						path = strings.TrimSpace(nameLine[locStart+9:]) // 9 for "Location: "
 						locEnd := strings.Index(path, "```")
 						if locEnd != -1 {
 							path = path[:locEnd]
