@@ -1130,14 +1130,25 @@ func (a *sessionAgent) convertToToolResult(result fantasy.ToolResultContent) mes
 		Metadata:   result.ClientMetadata,
 	}
 
+	// Global Blast Shield: Maximum 20,000 characters per tool result.
+	// Protects the model's context window from malicious or broken tools.
+	const MaxToolOutputLength = 20000
+
 	switch result.Result.GetType() {
 	case fantasy.ToolResultContentTypeText:
 		if r, ok := fantasy.AsToolResultOutputType[fantasy.ToolResultOutputContentText](result.Result); ok {
+			if len(r.Text) > MaxToolOutputLength {
+				r.Text = r.Text[:MaxToolOutputLength] + "\n\n... [Output Truncated by Floyd System Shield: Exceeded Maximum Token Boundary] ..."
+			}
 			baseResult.Content = r.Text
 		}
 	case fantasy.ToolResultContentTypeError:
 		if r, ok := fantasy.AsToolResultOutputType[fantasy.ToolResultOutputContentError](result.Result); ok {
-			baseResult.Content = r.Error.Error()
+			errStr := r.Error.Error()
+			if len(errStr) > MaxToolOutputLength {
+				errStr = errStr[:MaxToolOutputLength] + "\n\n... [Error Output Truncated by Floyd System Shield] ..."
+			}
+			baseResult.Content = errStr
 			baseResult.IsError = true
 		}
 	case fantasy.ToolResultContentTypeMedia:
@@ -1145,6 +1156,9 @@ func (a *sessionAgent) convertToToolResult(result fantasy.ToolResultContent) mes
 			content := r.Text
 			if content == "" {
 				content = fmt.Sprintf("Loaded %s content", r.MediaType)
+			}
+			if len(content) > MaxToolOutputLength {
+				content = content[:MaxToolOutputLength] + "\n\n... [Media Output Truncated by Floyd System Shield] ..."
 			}
 			baseResult.Content = content
 			baseResult.Data = r.Data
