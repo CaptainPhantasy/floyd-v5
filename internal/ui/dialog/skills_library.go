@@ -8,6 +8,7 @@ import (
 	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/sahilm/fuzzy"
 	"strings"
+	"time"
 
 	"github.com/legacy-ai/floyd/internal/skills"
 	"github.com/legacy-ai/floyd/internal/ui/common"
@@ -41,6 +42,8 @@ type SkillsLibrary struct {
 	categories       []SkillCategory
 	selectedCategory int
 	categoryCounts   map[string]int
+
+	filterTimer *time.Timer
 
 	keyMap struct {
 		Select       key.Binding
@@ -349,9 +352,17 @@ func (s *SkillsLibrary) HandleMsg(msg tea.Msg) Action {
 			var cmd tea.Cmd
 			s.input, cmd = s.input.Update(msg)
 			value := s.input.Value()
-			s.list.SetFilter(value)
-			s.list.ScrollToTop()
-			s.list.SetSelected(0)
+
+			// 150ms Debounce
+			if s.filterTimer != nil {
+				s.filterTimer.Stop()
+			}
+			s.filterTimer = time.AfterFunc(150*time.Millisecond, func() {
+				s.list.SetFilter(value)
+				s.list.ScrollToTop()
+				s.list.SetSelected(0)
+			})
+
 			return ActionCmd{cmd}
 		}
 	}
@@ -499,7 +510,14 @@ func (s *SkillsLibraryItem) Render(width int) string {
 		if len(preview) > 300 {
 			preview = preview[:300] + "..."
 		}
-		description = description + "\n\n" + s.t.HalfMuted.Render(preview)
+		
+		if s.focused {
+			description = description + "\n\n" + s.t.Base.Render(preview)
+		} else {
+			description = description + "\n\n" + s.t.HalfMuted.Render(preview)
+		}
+	} else if s.focused {
+		description = s.t.Dialog.TitleText.Render(description)
 	}
 
 	return renderItem(styles, name, description, s.focused, width, s.cache, &s.m)
