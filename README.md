@@ -15,6 +15,12 @@ Floyd brings AI coding assistants directly into your terminal with a full-featur
 - **MCP Integration** - Extensible via Model Context Protocol servers
 - **Shell Autocompletion** - Bash, Fish, Zsh, and PowerShell support
 
+## Prerequisites
+
+- **Go 1.25+**
+- **Docker / OrbStack**: Required for v5.0.2+ Ephemeral Sandboxing. The engine uses Docker to run untrusted code and bypass local host restrictions.
+- **MCP Servers**: Model Context Protocol must be configured in `floyd.json`.
+
 ## Installation
 
 ### Download Binary

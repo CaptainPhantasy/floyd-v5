@@ -30,6 +30,11 @@ type SandboxConfig struct {
 
 // Provision dynamically spins up a new isolated container and starts the MCP server inside it.
 func Provision(ctx context.Context, cfg SandboxConfig) (*EphemeralSandbox, error) {
+	// Pre-flight: Check if docker is actually running
+	if err := exec.CommandContext(ctx, "docker", "ps").Run(); err != nil {
+		return nil, fmt.Errorf("Docker is required for sandboxing but is not currently running. Please launch OrbStack and retry")
+	}
+
 	sandboxID := fmt.Sprintf("floyd-sandbox-%s", uuid.New().String()[:8])
 
 	args := []string{
