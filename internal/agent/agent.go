@@ -309,10 +309,10 @@ func (a *sessionAgent) Run(ctx context.Context, call SessionAgentCall) (*fantasy
 					prepared.Messages[lastSystemRoleInx].ProviderOptions = a.getCacheControlOptions()
 					systemMessageUpdated = true
 				}
-				// Then add cache control to the last 2 messages.
-				if i > len(prepared.Messages)-3 {
-					prepared.Messages[i].ProviderOptions = a.getCacheControlOptions()
-				}
+				// Disable cache control for the last few messages to prevent token bloat
+				// if i > len(prepared.Messages)-3 {
+				// 	prepared.Messages[i].ProviderOptions = a.getCacheControlOptions()
+				// }
 			}
 
 			if promptPrefix != "" {

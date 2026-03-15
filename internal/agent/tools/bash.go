@@ -47,7 +47,7 @@ const (
 	BashToolName = "bash"
 
 	AutoBackgroundThreshold = 1 * time.Minute // Commands taking longer automatically become background jobs
-	MaxOutputLength         = 30000
+	MaxOutputLength         = 8000
 	BashNoOutput            = "no output"
 )
 
