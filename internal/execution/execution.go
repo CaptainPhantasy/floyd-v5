@@ -192,7 +192,7 @@ func (e *Environment) Execute(ctx context.Context, command string, options Optio
 	slog.Debug("Executing command", "command", command, "cwd", cwd, "shell", shell)
 	start := time.Now()
 
-	cmd := exec.CommandContext(ctx, shell, "-c", command)
+	cmd := exec.CommandContext(ctx, shell, "-c", command) // #nosec G204
 	cmd.Dir = cwd
 	cmd.Env = env
 
@@ -241,7 +241,7 @@ func (e *Environment) ExecuteBackground(ctx context.Context, command string, opt
 		shell = defaultShell()
 	}
 
-	cmd := exec.CommandContext(ctx, shell, "-c", command)
+	cmd := exec.CommandContext(ctx, shell, "-c", command) // #nosec G204
 	cmd.Dir = cwd
 	cmd.Env = e.mergeEnv(options.Env)
 

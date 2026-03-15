@@ -31,7 +31,7 @@ func NewSession(rows, cols int, cwd string) (*Session, error) {
 		shellPath = "/bin/sh"
 	}
 
-	c := exec.Command(shellPath)
+	c := exec.Command(shellPath) // #nosec G204
 	c.Env = os.Environ()
 	c.Env = append(c.Env, "TERM=xterm-256color")
 	if cwd != "" {

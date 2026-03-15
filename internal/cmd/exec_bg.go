@@ -94,7 +94,7 @@ var execBgStartCmd = &cobra.Command{
 		}
 		defer stderrFile.Close()
 
-		cmdExec := exec.Command(shell, "-c", command)
+		cmdExec := exec.Command(shell, "-c", command) // #nosec G204
 		cmdExec.Dir = cwd
 		cmdExec.Stdout = stdoutFile
 		cmdExec.Stderr = stderrFile

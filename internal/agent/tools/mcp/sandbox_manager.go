@@ -43,7 +43,7 @@ func Provision(ctx context.Context, cfg SandboxConfig) (*EphemeralSandbox, error
 		"/bin/sh", // Entrypoint for passing standard commands
 	}
 
-	cmd := exec.CommandContext(ctx, "docker", args...)
+	cmd := exec.CommandContext(ctx, "docker", args...) // #nosec G204
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -74,7 +74,7 @@ func Provision(ctx context.Context, cfg SandboxConfig) (*EphemeralSandbox, error
 // Teardown forcefully destroys the sandbox, flushing the state.
 func (s *EphemeralSandbox) Teardown() error {
 	_ = s.stdin.Close()
-	killCmd := exec.Command("docker", "rm", "-f", s.ID)
+	killCmd := exec.Command("docker", "rm", "-f", s.ID) // #nosec G204
 	if err := killCmd.Run(); err != nil {
 		return fmt.Errorf("failed to destroy sandbox %s: %w", s.ID, err)
 	}

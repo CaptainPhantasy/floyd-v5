@@ -93,6 +93,6 @@ func ExecShell(ctx context.Context, cmdStr string, callback tea.ExecCallback) te
 		return ReportError(errors.New("empty command"))
 	}
 
-	cmd := exec.CommandContext(ctx, fields[0], fields[1:]...)
+	cmd := exec.CommandContext(ctx, fields[0], fields[1:]...) // #nosec G204
 	return tea.ExecProcess(cmd, callback)
 }

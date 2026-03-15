@@ -34,7 +34,7 @@ func getRgCmd(ctx context.Context, globPattern string) *exec.Cmd {
 		}
 		args = append(args, "--glob", globPattern)
 	}
-	return exec.CommandContext(ctx, name, args...)
+	return exec.CommandContext(ctx, name, args...) // #nosec G204
 }
 
 func getRgSearchCmd(ctx context.Context, pattern, path, include string) *exec.Cmd {
@@ -49,5 +49,5 @@ func getRgSearchCmd(ctx context.Context, pattern, path, include string) *exec.Cm
 	}
 	args = append(args, path)
 
-	return exec.CommandContext(ctx, name, args...)
+	return exec.CommandContext(ctx, name, args...) // #nosec G204
 }

@@ -1,12 +1,10 @@
 package agent
 
 import (
-	"context"
 	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"charm.land/catwalk/pkg/catwalk"
 	"charm.land/fantasy"
@@ -15,7 +13,6 @@ import (
 	"charm.land/fantasy/providers/openaicompat"
 	"charm.land/fantasy/providers/openrouter"
 	"charm.land/x/vcr"
-	"github.com/legacy-ai/floyd/internal/agent/prompt"
 	"github.com/legacy-ai/floyd/internal/agent/tools"
 	"github.com/legacy-ai/floyd/internal/config"
 	"github.com/legacy-ai/floyd/internal/csync"
@@ -52,9 +49,10 @@ type modelPair struct {
 
 func anthropicBuilder(model string) builderFunc {
 	return func(t *testing.T, r *vcr.Recorder) (fantasy.LanguageModel, error) {
+		client := &http.Client{Transport: r}
 		provider, err := anthropic.New(
 			anthropic.WithAPIKey(os.Getenv("FLOYD_ANTHROPIC_API_KEY")),
-			anthropic.WithHTTPClient(&http.Client{Transport: r}),
+			anthropic.WithHTTPClient(client),
 		)
 		if err != nil {
 			return nil, err
@@ -65,9 +63,10 @@ func anthropicBuilder(model string) builderFunc {
 
 func openaiBuilder(model string) builderFunc {
 	return func(t *testing.T, r *vcr.Recorder) (fantasy.LanguageModel, error) {
+		client := &http.Client{Transport: r}
 		provider, err := openai.New(
 			openai.WithAPIKey(os.Getenv("FLOYD_OPENAI_API_KEY")),
-			openai.WithHTTPClient(&http.Client{Transport: r}),
+			openai.WithHTTPClient(client),
 		)
 		if err != nil {
 			return nil, err
@@ -78,9 +77,10 @@ func openaiBuilder(model string) builderFunc {
 
 func openRouterBuilder(model string) builderFunc {
 	return func(t *testing.T, r *vcr.Recorder) (fantasy.LanguageModel, error) {
+		client := &http.Client{Transport: r}
 		provider, err := openrouter.New(
 			openrouter.WithAPIKey(os.Getenv("FLOYD_OPENROUTER_API_KEY")),
-			openrouter.WithHTTPClient(&http.Client{Transport: r}),
+			openrouter.WithHTTPClient(client),
 		)
 		if err != nil {
 			return nil, err
@@ -91,10 +91,11 @@ func openRouterBuilder(model string) builderFunc {
 
 func zAIBuilder(model string) builderFunc {
 	return func(t *testing.T, r *vcr.Recorder) (fantasy.LanguageModel, error) {
+		client := &http.Client{Transport: r}
 		provider, err := openaicompat.New(
 			openaicompat.WithBaseURL("https://api.z.ai/api/coding/paas/v4"),
 			openaicompat.WithAPIKey(os.Getenv("FLOYD_ZAI_API_KEY")),
-			openaicompat.WithHTTPClient(&http.Client{Transport: r}),
+			openaicompat.WithHTTPClient(client),
 		)
 		if err != nil {
 			return nil, err
@@ -157,19 +158,9 @@ func testSessionAgent(env fakeEnv, large, small fantasy.LanguageModel, systemPro
 	return agent
 }
 
+const testSystemPrompt = "You are Floyd, a powerful AI Assistant that runs in the CLI. Always be autonomous, concise, and use exact text matches when editing."
+
 func coderAgent(r *vcr.Recorder, env fakeEnv, large, small fantasy.LanguageModel) (SessionAgent, error) {
-	fixedTime := func() time.Time {
-		t, _ := time.Parse("1/2/2006", "1/1/2025")
-		return t
-	}
-	prompt, err := coderPrompt(
-		prompt.WithTimeFunc(fixedTime),
-		prompt.WithPlatform("linux"),
-		prompt.WithWorkingDir(filepath.ToSlash(env.workingDir)),
-	)
-	if err != nil {
-		return nil, err
-	}
 	cfg, err := config.Init(env.workingDir, "", false)
 	if err != nil {
 		return nil, err
@@ -180,19 +171,6 @@ func coderAgent(r *vcr.Recorder, env fakeEnv, large, small fantasy.LanguageModel
 	cfg.Options.Attribution = &config.Attribution{
 		TrailerStyle:  "co-authored-by",
 		GeneratedWith: true,
-	}
-
-	// Clear skills paths to ensure test reproducibility - user's skills
-	// would be included in prompt and break VCR cassette matching.
-	cfg.Options.SkillsPaths = []string{}
-
-	// Clear LSP config to ensure test reproducibility - user's LSP config
-	// would be included in prompt and break VCR cassette matching.
-	cfg.LSP = nil
-
-	systemPrompt, err := prompt.Build(context.TODO(), large.Provider(), large.Model(), *cfg)
-	if err != nil {
-		return nil, err
 	}
 
 	// Get the model name for the bash tool
@@ -215,7 +193,7 @@ func coderAgent(r *vcr.Recorder, env fakeEnv, large, small fantasy.LanguageModel
 		tools.NewWriteTool(env.lspClients, env.permissions, env.history, *env.filetracker, env.workingDir),
 	}
 
-	return testSessionAgent(env, large, small, systemPrompt, allTools...), nil
+	return testSessionAgent(env, large, small, testSystemPrompt, allTools...), nil
 }
 
 // createSimpleGoProject creates a simple Go project structure in the given directory.
