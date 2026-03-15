@@ -3,85 +3,106 @@ package mcp
 import (
 	"context"
 	"fmt"
-	"io"
 	"os/exec"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-// EphemeralSandbox represents a sterile, single-use execution environment.
-type EphemeralSandbox struct {
-	ID        string
-	Image     string
-	cmd       *exec.Cmd
-	stdin     io.WriteCloser
-	stdout    io.ReadCloser
-	CreatedAt time.Time
+// PersistentLab represents a long-lived, privileged execution environment.
+type PersistentLab struct {
+	ID         string
+	Container  string
+	WorkingDir string
+	CreatedAt  time.Time
+	mu         sync.Mutex
 }
 
-// SandboxConfig defines the constraints for the Superfloyd sandbox.
-type SandboxConfig struct {
-	Image     string
-	Timeout   time.Duration
-	MountPath string // e.g., mapping ./.floyd/.supercache
-	MaxMemory string // e.g., "2g"
+var (
+	activeLabs = make(map[string]*PersistentLab)
+	labsMu     sync.Mutex
+)
+
+// GetLab retrieves an existing lab for a session or returns nil.
+func GetLab(sessionID string) *PersistentLab {
+	labsMu.Lock()
+	defer labsMu.Unlock()
+	return activeLabs[sessionID]
 }
 
-// Provision dynamically spins up a new isolated container and starts the MCP server inside it.
-func Provision(ctx context.Context, cfg SandboxConfig) (*EphemeralSandbox, error) {
-	// Pre-flight: Check if docker is actually running
-	if err := exec.CommandContext(ctx, "docker", "ps").Run(); err != nil {
-		return nil, fmt.Errorf("Docker is required for sandboxing but is not currently running. Please launch OrbStack and retry")
+// ProvisionLab ignites a privileged, persistent Docker container and mirrors the host workspace.
+func ProvisionLab(ctx context.Context, sessionID string, hostWd string, image string) (*PersistentLab, error) {
+	labsMu.Lock()
+	if lab, ok := activeLabs[sessionID]; ok {
+		labsMu.Unlock()
+		return lab, nil
 	}
+	labsMu.Unlock()
 
-	sandboxID := fmt.Sprintf("floyd-sandbox-%s", uuid.New().String()[:8])
+	containerName := fmt.Sprintf("floyd-lab-%s", uuid.New().String()[:8])
 
+	// 1. Ignite the privileged container in detached mode
 	args := []string{
-		"run", "--rm", "-i",
-		"--name", sandboxID,
-		"--memory", cfg.MaxMemory,
+		"run", "-d", "--privileged",
+		"--name", containerName,
 		"--network", "bridge",
-		"-v", fmt.Sprintf("%s:/workspace", cfg.MountPath),
 		"-w", "/workspace",
-		cfg.Image,
-		"/bin/sh", // Entrypoint for passing standard commands
+		image,
+		"tail", "-f", "/dev/null", // Keep alive
 	}
 
-	cmd := exec.CommandContext(ctx, "docker", args...) // #nosec G204
-
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return nil, fmt.Errorf("failed to map sandbox stdin: %w", err)
+	if err := exec.CommandContext(ctx, "docker", args...).Run(); err != nil {
+		return nil, fmt.Errorf("failed to ignite persistent lab: %w", err)
 	}
 
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, fmt.Errorf("failed to map sandbox stdout: %w", err)
+	// 2. Mirror host workspace to container (Isolated Clone)
+	// We copy the contents of the current host directory into the container's /workspace
+	copyArgs := []string{"cp", hostWd + "/.", containerName + ":/workspace/"}
+	if err := exec.CommandContext(ctx, "docker", copyArgs...).Run(); err != nil {
+		// Cleanup on failure
+		_ = exec.Command("docker", "rm", "-f", containerName).Run()
+		return nil, fmt.Errorf("failed to mirror workspace to lab: %w", err)
 	}
 
-	cmd.Stderr = nil // Suppress raw stderr to avoid polluting the host stream
-
-	if err := cmd.Start(); err != nil {
-		return nil, fmt.Errorf("failed to ignite ephemeral sandbox: %w", err)
+	lab := &PersistentLab{
+		ID:         sessionID,
+		Container:  containerName,
+		WorkingDir: "/workspace",
+		CreatedAt:  time.Now(),
 	}
 
-	return &EphemeralSandbox{
-		ID:        sandboxID,
-		Image:     cfg.Image,
-		cmd:       cmd,
-		stdin:     stdin,
-		stdout:    stdout,
-		CreatedAt: time.Now(),
-	}, nil
+	labsMu.Lock()
+	activeLabs[sessionID] = lab
+	labsMu.Unlock()
+
+	return lab, nil
 }
 
-// Teardown forcefully destroys the sandbox, flushing the state.
-func (s *EphemeralSandbox) Teardown() error {
-	_ = s.stdin.Close()
-	killCmd := exec.Command("docker", "rm", "-f", s.ID) // #nosec G204
-	if err := killCmd.Run(); err != nil {
-		return fmt.Errorf("failed to destroy sandbox %s: %w", s.ID, err)
+// Execute runs a command inside the persistent lab and returns output.
+func (l *PersistentLab) Execute(ctx context.Context, command string) (string, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	args := []string{"exec", l.Container, "/bin/sh", "-c", command}
+	cmd := exec.CommandContext(ctx, "docker", args...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return string(out), fmt.Errorf("lab execution failed: %w", err)
 	}
-	return s.cmd.Wait()
+	return string(out), nil
+}
+
+// TeardownLab destroys the specific container.
+func TeardownLab(sessionID string) error {
+	labsMu.Lock()
+	lab, ok := activeLabs[sessionID]
+	if !ok {
+		labsMu.Unlock()
+		return nil
+	}
+	delete(activeLabs, sessionID)
+	labsMu.Unlock()
+
+	return exec.Command("docker", "rm", "-f", lab.Container).Run()
 }
