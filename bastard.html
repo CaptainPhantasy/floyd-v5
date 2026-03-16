@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Puzzle Architect - The Real Villain</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            background: radial-gradient(circle at center, #1a0a0a 0%, #000000 100%);
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(20, 0, 0, 0.9);
+            padding: 25px;
+            border-radius: 4px;
+            color: #ff0000;
+            max-width: 380px;
+            border: 2px solid #ff0000;
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.3);
+            z-index: 2;
+        }
+
+        #ui-overlay h1 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #ff0000;
+            border-bottom: 2px solid #ff0000;
+            padding-bottom: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        #ui-overlay .quote {
+            font-style: italic;
+            font-size: 13px;
+            color: #ff6666;
+            margin-bottom: 20px;
+            border-left: 3px solid #ff0000;
+            padding-left: 10px;
+            line-height: 1.5;
+        }
+
+        #ui-overlay .info {
+            font-size: 11px;
+            color: #ff9999;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        #ui-overlay .signature {
+            font-size: 12px;
+            color: #ff0000;
+            text-align: right;
+            margin-top: 20px;
+            letter-spacing: 3px;
+            animation: flicker 2s infinite;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+            25%, 75% { opacity: 0.9; }
+        }
+
+        .trait {
+            background: rgba(255, 0, 0, 0.1);
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 3px solid #ff0000;
+        }
+
+        .trait h3 {
+            font-size: 12px;
+            margin-bottom: 6px;
+            color: #ff0000;
+        }
+
+        .trait p {
+            font-size: 10px;
+            color: #ff6666;
+            line-height: 1.5;
+        }
+
+        .glitch-text {
+            animation: glitch 1s infinite;
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 2px 0 #ff0000, -2px 0 #00ff00; }
+            25% { text-shadow: -2px 0 #ff0000, 2px 0 #00ff00; }
+            50% { text-shadow: 2px 0 #ff0000, -2px 0 #00ff00; }
+            75% { text-shadow: -2px 0 #ff0000, 2px 0 #00ff00; }
+            100% { text-shadow: 2px 0 #ff0000, -2px 0 #00ff00; }
+        }
+
+        #stats-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(20, 0, 0, 0.9);
+            padding: 15px;
+            border-radius: 4px;
+            color: #ff0000;
+            font-family: 'Courier New', monospace;
+            border: 1px solid #ff0000;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.2);
+            font-size: 10px;
+            line-height: 2;
+            z-index: 2;
+        }
+
+        #stats-panel .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(20, 0, 0, 0.9);
+            padding: 15px 25px;
+            border-radius: 4px;
+            border: 1px solid #ff0000;
+            font-family: 'Courier New', monospace;
+            z-index: 2;
+        }
+
+        button {
+            background: rgba(255, 0, 0, 0.1);
+            color: #ff0000;
+            border: 1px solid #ff0000;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background: #ff0000;
+            color: #000;
+        }
+
+        button.active {
+            background: #ff0000;
+            color: #000;
+        }
+
+        #eye-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.3;
+            z-index: 0;
+        }
+
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 40%, rgba(255, 0, 0, 0.5) 100%);
+            z-index: 0;
+        }
+
+        #pulse-indicator {
+            position: absolute;
+            bottom: 100px;
+            left: 20px;
+            color: #ff0000;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            z-index: 2;
+        }
+
+        #pulse-indicator .pulse {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #ff0000;
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="vignette"></div>
+
+    <div id="ui-overlay">
+        <h1 class="glitch-text">🧩 THE PUZZLE ARCHITECT 🧩</h1>
+
+        <p class="quote">"The only thing I enjoy more than solving problems... is watching you try to understand my madness."</p>
+
+        <div class="trait">
+            <h3>🎭 Name: The Contrarian</h3>
+            <p>A mathematician who finds pleasure in creating impossible scenarios, believing that the most beautiful problems are the ones that challenge the fundamental laws of physics.</p>
+        </div>
+
+        <div class="trait">
+            <h3>🔬 Domain: Counterfactual Physics</h3>
+            <p>Specializes in constructing scenarios where the laws of nature are deliberately broken. Believes that by violating one rule, we discover deeper truths about reality.</p>
+        </div>
+
+        <div class="trait">
+            <h3>💀 Signature Crime</h3>
+            <p>Designed the Luzion Fountain not to solve a problem, but to create chaos. Created the temperature threshold at exactly -10 ZD specifically because it's mathematically elegant yet physically impossible.</p>
+        </div>
+
+        <div class="trait">
+            <h3>👿 Motivation</h3>
+            <p>Believes that elegant solutions to absurd problems are the ultimate form of art. Gets pleasure from watching people struggle with concepts that he knows are deliberately contradictory.</p>
+        </div>
+
+        <p class="info">
+            > He doesn't solve problems.<br>
+            > He creates problems to solve them.<br>
+            > He's not an evil genius.<br>
+            > He's just... enthusiastic about contradictions.
+        </p>
+
+        <p class="signature">THE CONTRARIAN</p>
+    </div>
+
+    <div id="stats-panel">
+        <div class="stat-row">
+            <span>CHAOS LEVEL:</span>
+            <span>100%</span>
+        </div>
+        <div class="stat-row">
+            <span>INCONVENIENCE:</span>
+            <span>MAXIMUM</span>
+        </div>
+        <div class="stat-row">
+            <span>KNOWLEDGE:</span>
+            <span>INFINITE</span>
+        </div>
+        <div class="stat-row">
+            <span>SYMPATHY:</span>
+            <span>NONE</span>
+        </div>
+        <div class="stat-row">
+            <span>DESPAIR:</span>
+            <span>ENSURED</span>
+        </div>
+    </div>
+
+    <div id="pulse-indicator">
+        <div class="pulse"></div>
+        CHAOS ENGINE: ACTIVE
+    </div>
+
+    <div class="controls">
+        <button id="rotate-btn">⏸ Stop Rotation</button>
+        <button id="pulse-btn">🔴 Activate Chaos</button>
+        <button id="phase-btn">🌀 Shift Phase</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                // Scene setup
+                const container = document.getElementById('canvas-container');
+                if (!container) {
+                    console.error('Container element not found');
+                    return;
+                }
+
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.toneMapping = THREE.ReinhardToneMapping;
+                container.appendChild(renderer.domElement);
+
+                // Camera position
+                camera.position.set(0, 5, 15);
+                camera.lookAt(0, 0, 0);
+
+                // Orbit controls
+                const controls = new THREE.OrbitControls(camera, renderer.domElement);
+                if (!controls) {
+                    console.error('OrbitControls not available');
+                    return;
+                }
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.05;
+                controls.autoRotate = true;
+                controls.autoRotateSpeed = 0.5;
+
+                // Lighting
+                const ambientLight = new THREE.AmbientLight(0x220000, 0.5);
+                scene.add(ambientLight);
+
+                const pointLight1 = new THREE.PointLight(0xff0000, 1, 100);
+                pointLight1.position.set(5, 10, 5);
+                scene.add(pointLight1);
+
+                const pointLight2 = new THREE.PointLight(0xff4400, 0.8, 100);
+                pointLight2.position.set(-5, -5, -5);
+                scene.add(pointLight2);
+
+                const pointLight3 = new THREE.PointLight(0xff2200, 0.6, 100);
+                pointLight3.position.set(5, -5, -5);
+                scene.add(pointLight3);
+
+                const pointLight4 = new THREE.PointLight(0xff6600, 0.5, 100);
+                pointLight4.position.set(-5, 5, 5);
+                scene.add(pointLight4);
+
+                // Main head
+                const headGeometry = new THREE.SphereGeometry(3, 32, 32);
+                const headMaterial = new THREE.MeshPhongMaterial({
+                    color: 0x1a1a1a,
+                    transparent: true,
+                    opacity: 0.9,
+                    shininess: 100,
+                    specular: 0xff0000
+                });
+                const head = new THREE.Mesh(headGeometry, headMaterial);
+                scene.add(head);
+
+                // Evil eye (left)
+                const eyeGeometry = new THREE.SphereGeometry(0.8, 32, 32);
+                const eyeMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xff0000,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+                leftEye.position.set(-1.2, 0.3, 2.2);
+                head.add(leftEye);
+
+                // Evil eye (right)
+                const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial.clone());
+                rightEye.position.set(1.2, 0.3, 2.2);
+                head.add(rightEye);
+
+                // Pupil (left)
+                const pupilGeometry = new THREE.SphereGeometry(0.5, 16, 16);
+                const pupilMaterial = new THREE.MeshBasicMaterial({
+                    color: 0x000000
+                });
+                const leftPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+                leftPupil.position.set(-1.2, 0.3, 2.7);
+                leftEye.add(leftPupil);
+
+                // Pupil (right)
+                const rightPupil = new THREE.Mesh(pupilGeometry, pupilMaterial.clone());
+                rightPupil.position.set(1.2, 0.3, 2.7);
+                rightEye.add(rightPupil);
+
+                // Mathematical symbols in eyes
+                const mathSymbols = [];
+                const symbolMaterials = [
+                    new THREE.MeshBasicMaterial({ color: 0xff0000 }),
+                    new THREE.MeshBasicMaterial({ color: 0xff0000 })
+                ];
+
+                for (let i = 0; i < 5; i++) {
+                    const symbolGeometry = new THREE.PlaneGeometry(0.3, 0.3);
+                    const symbolMaterial = symbolMaterials[Math.floor(Math.random() * 2)];
+                    const symbol = new THREE.Mesh(symbolGeometry, symbolMaterial);
+
+                    symbol.position.x = -1.2 + (Math.random() - 0.5) * 0.5;
+                    symbol.position.y = 0.3 + (Math.random() - 0.5) * 0.5;
+                    symbol.position.z = 2.7 + (Math.random() - 0.5) * 0.2;
+                    symbol.rotation.z = Math.random() * Math.PI;
+
+                    leftEye.add(symbol);
+                    mathSymbols.push(symbol);
+                }
+
+                for (let i = 0; i < 5; i++) {
+                    const symbolGeometry = new THREE.PlaneGeometry(0.3, 0.3);
+                    const symbolMaterial = symbolMaterials[Math.floor(Math.random() * 2)];
+                    const symbol = new THREE.Mesh(symbolGeometry, symbolMaterial.clone());
+
+                    symbol.position.x = 1.2 + (Math.random() - 0.5) * 0.5;
+                    symbol.position.y = 0.3 + (Math.random() - 0.5) * 0.5;
+                    symbol.position.z = 2.7 + (Math.random() - 0.5) * 0.2;
+                    symbol.rotation.z = Math.random() * Math.PI;
+
+                    rightEye.add(symbol);
+                    mathSymbols.push(symbol);
+                }
+
+                // Nose
+                const noseGeometry = new THREE.ConeGeometry(0.4, 1, 4);
+                const noseMaterial = new THREE.MeshPhongMaterial({
+                    color: 0x2a2a2a,
+                    transparent: true,
+                    opacity: 0.8,
+                    shininess: 50
+                });
+                const nose = new THREE.Mesh(noseGeometry, noseMaterial);
+                nose.position.set(0, -0.5, 2.8);
+                nose.rotation.x = -0.5;
+                head.add(nose);
+
+                // Mouth (sinister smile)
+                const smileGeometry = new THREE.TorusGeometry(0.6, 0.1, 16, 32, Math.PI);
+                const smileMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xff0000,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                const smile = new THREE.Mesh(smileGeometry, smileMaterial);
+                smile.position.set(0, -1.5, 2.8);
+                smile.rotation.x = 0.5;
+                smile.rotation.z = Math.PI;
+                head.add(smile);
+
+                // Horns
+                const hornGeometries = [
+                    new THREE.ConeGeometry(0.2, 2, 8),
+                    new THREE.ConeGeometry(0.2, 2, 8)
+                ];
+
+                const hornMaterial = new THREE.MeshPhongMaterial({
+                    color: 0x3a3a3a,
+                    transparent: true,
+                    opacity: 0.9,
+                    shininess: 100
+                });
+
+                const leftHorn = new THREE.Mesh(hornGeometries[0], hornMaterial.clone());
+                leftHorn.position.set(-1.5, 3, 0);
+                leftHorn.rotation.z = -0.5;
+                leftHorn.rotation.x = 0.3;
+                scene.add(leftHorn);
+
+                const rightHorn = new THREE.Mesh(hornGeometries[1], hornMaterial.clone());
+                rightHorn.position.set(1.5, 3, 0);
+                rightHorn.rotation.z = 0.5;
+                rightHorn.rotation.x = 0.3;
+                scene.add(rightHorn);
+
+                // Floating mathematical symbols
+                const floatSymbols = [];
+                const floatPositions = [
+                    { x: -3, y: 3, z: 0 },
+                    { x: 3, y: 3, z: 0 },
+                    { x: 0, y: 5, z: 2 },
+                    { x: 0, y: -2, z: 3 },
+                    { x: -4, y: 1, z: 2 },
+                    { x: 4, y: 1, z: 2 }
+                ];
+
+                const symbolList = ['∑', '∫', 'π', '∞', '√', 'λ', 'φ', 'ψ', 'θ', 'ω'];
+
+                for (let i = 0; i < 10; i++) {
+                    const symbolGeometry = new THREE.PlaneGeometry(0.8, 0.8);
+                    const symbolMaterial = new THREE.MeshBasicMaterial({
+                        color: 0xff0000,
+                        transparent: true,
+                        opacity: 0.6
+                    });
+                    const symbol = new THREE.Mesh(symbolGeometry, symbolMaterial);
+
+                    symbol.position.copy(floatPositions[i]);
+                    symbol.userData = {
+                        floatSpeed: 0.01 + Math.random() * 0.02,
+                        floatOffset: Math.random() * Math.PI * 2,
+                        floatAmplitude: 0.3 + Math.random() * 0.5
+                    };
+
+                    scene.add(symbol);
+                    floatSymbols.push(symbol);
+                }
+
+                // Floating numbers
+                const floatNumbers = [];
+                const numberPositions = [
+                    { x: -5, y: 0, z: -2 },
+                    { x: 5, y: 0, z: -2 },
+                    { x: -5, y: 2, z: -3 },
+                    { x: 5, y: 2, z: -3 }
+                ];
+
+                for (let i = 0; i < 8; i++) {
+                    const numGeometry = new THREE.PlaneGeometry(0.5, 0.5);
+                    const numMaterial = new THREE.MeshBasicMaterial({
+                        color: 0xff0000,
+                        transparent: true,
+                        opacity: 0.4
+                    });
+                    const num = new THREE.Mesh(numGeometry, numMaterial);
+                    num.position.set(numberPositions[Math.floor(i / 2)].x, numberPositions[Math.floor(i / 2)].y, numberPositions[Math.floor(i / 2)].z);
+                    num.rotation.y = Math.random() * Math.PI;
+
+                    scene.add(num);
+                    floatNumbers.push(num);
+                }
+
+                // Chaotic energy ring
+                const ringGeometry = new THREE.TorusGeometry(5, 0.05, 16, 100);
+                const ringMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xff0000,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                const chaosRing = new THREE.Mesh(ringGeometry, ringMaterial);
+                chaosRing.rotation.x = Math.PI / 2;
+                scene.add(chaosRing);
+
+                // Floating debris
+                const debris = [];
+                for (let i = 0; i < 50; i++) {
+                    const debrisGeometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+                    const debrisMaterial = new THREE.MeshBasicMaterial({
+                        color: 0xff0000,
+                        transparent: true,
+                        opacity: 0.3
+                    });
+                    const piece = new THREE.Mesh(debrisGeometry, debrisMaterial);
+
+                    piece.position.set(
+                        (Math.random() - 0.5) * 15,
+                        (Math.random() - 0.5) * 15,
+                        (Math.random() - 0.5) * 15
+                    );
+                    piece.userData = {
+                        rotationSpeed: {
+                            x: (Math.random() - 0.5) * 0.02,
+                            y: (Math.random() - 0.5) * 0.02,
+                            z: (Math.random() - 0.5) * 0.02
+                        },
+                        floatSpeed: 0.005 + Math.random() * 0.01,
+                        floatOffset: Math.random() * Math.PI * 2
+                    };
+
+                    scene.add(piece);
+                    debris.push(piece);
+                }
+
+                // Eye glow effect
+                const eyeGlowGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+                const eyeGlowMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xff0000,
+                    transparent: true,
+                    opacity: 0.1
+                });
+                const leftEyeGlow = new THREE.Mesh(eyeGlowGeometry, eyeGlowMaterial.clone());
+                leftEyeGlow.position.copy(leftEye.position);
+                scene.add(leftEyeGlow);
+
+                const rightEyeGlow = new THREE.Mesh(eyeGlowGeometry, eyeGlowMaterial.clone());
+                rightEyeGlow.position.copy(rightEye.position);
+                scene.add(rightEyeGlow);
+
+                // Update glow effect
+                function updateEyeGlow() {
+                    const time = Date.now() * 0.003;
+                    const scale = 1 + Math.sin(time) * 0.2 + Math.cos(time * 2) * 0.1;
+                    leftEyeGlow.scale.setScalar(scale);
+                    rightEyeGlow.scale.setScalar(scale);
+                    leftEyeGlow.material.opacity = 0.1 + Math.sin(time) * 0.1;
+                    rightEyeGlow.material.opacity = 0.1 + Math.sin(time) * 0.1;
+                }
+
+                // Animate floating symbols
+                function animateFloatingSymbols() {
+                    const time = Date.now() * 0.001;
+                    floatSymbols.forEach((symbol, index) => {
+                        symbol.position.y = floatPositions[index].y + Math.sin(time + symbol.userData.floatOffset) * symbol.userData.floatAmplitude;
+                        symbol.rotation.z = time * 0.5 + symbol.userData.floatOffset;
+                    });
+
+                    floatNumbers.forEach((num, index) => {
+                        num.position.y = numberPositions[Math.floor(index / 2)].y + Math.sin(time * 0.5 + index) * 0.5;
+                        num.rotation.y = time * 0.3 + index * 0.5;
+                    });
+                }
+
+                // Animate chaos ring
+                function animateChaosRing() {
+                    const time = Date.now() * 0.001;
+                    chaosRing.scale.setScalar(1 + Math.sin(time * 0.5) * 0.1);
+                    chaosRing.rotation.z = time * 0.2;
+                }
+
+                // Animate debris
+                function animateDebris() {
+                    const time = Date.now() * 0.001;
+                    debris.forEach(piece => {
+                        piece.rotation.x += piece.userData.rotationSpeed.x;
+                        piece.rotation.y += piece.userData.rotationSpeed.y;
+                        piece.rotation.z += piece.userData.rotationSpeed.z;
+                        piece.position.y += Math.sin(time + piece.userData.floatOffset) * piece.userData.floatSpeed;
+                    });
+                }
+
+                // Chaos pulse effect
+                let chaosIntensity = 1;
+                let isChaosActive = false;
+
+                function pulseChaos() {
+                    if (isChaosActive) {
+                        chaosIntensity = 1 + Math.sin(Date.now() * 0.01) * 0.5;
+                        chaosRing.material.opacity = 0.3 * chaosIntensity;
+                        pointLight1.intensity = 1 * chaosIntensity;
+                        pointLight2.intensity = 0.8 * chaosIntensity;
+                        pointLight3.intensity = 0.6 * chaosIntensity;
+                        pointLight4.intensity = 0.5 * chaosIntensity;
+
+                        floatSymbols.forEach(symbol => {
+                            symbol.material.opacity = 0.6 * chaosIntensity;
+                        });
+                    }
+                }
+
+                // Update symbol animations
+                function updateSymbols() {
+                    const time = Date.now() * 0.002;
+                    mathSymbols.forEach((symbol, index) => {
+                        symbol.position.x += Math.sin(time + index) * 0.01;
+                        symbol.position.y += Math.cos(time + index) * 0.01;
+                        symbol.rotation.z += 0.05;
+                        symbol.scale.setScalar(0.8 + Math.sin(time * 2 + index) * 0.4);
+                    });
+                }
+
+                // Phase shift effect
+                let phaseShift = 0;
+                let phaseDirection = 1;
+
+                function updatePhase() {
+                    phaseShift += 0.01 * phaseDirection;
+                    if (phaseShift > 1) phaseShift = 1;
+                    if (phaseShift < 0) phaseShift = 0;
+
+                    scene.traverse((object) => {
+                        if (object.material) {
+                            object.material.color.offsetHSL(0, 0, phaseShift * 0.1);
+                        }
+                    });
+                }
+
+                // Animation loop
+                let isRotating = true;
+
+                function animate() {
+                    requestAnimationFrame(animate);
+
+                    // Rotate head slowly
+                    if (isRotating) {
+                        head.rotation.y += 0.005;
+                    }
+
+                    // Update effects
+                    updateEyeGlow();
+                    animateFloatingSymbols();
+                    animateChaosRing();
+                    animateDebris();
+                    pulseChaos();
+                    updateSymbols();
+                    updatePhase();
+
+                    // Rotate camera
+                    controls.update();
+
+                    renderer.render(scene, camera);
+                }
+
+                animate();
+
+                // Event listeners
+                document.getElementById('rotate-btn').addEventListener('click', function() {
+                    isRotating = !isRotating;
+                    controls.autoRotate = isRotating;
+                    this.textContent = isRotating ? '⏸ Stop Rotation' : '▶ Resume Rotation';
+                });
+
+                document.getElementById('pulse-btn').addEventListener('click', function() {
+                    isChaosActive = !isChaosActive;
+                    this.textContent = isChaosActive ? '🔴 Deactivate Chaos' : '🔴 Activate Chaos';
+                });
+
+                document.getElementById('phase-btn').addEventListener('click', function() {
+                    phaseDirection *= -1;
+                    this.textContent = `🌀 Shift Phase ${phaseDirection > 0 ? '(Forward)' : '(Backward)'}`;
+                });
+
+                // Window resize handler
+                window.addEventListener('resize', function() {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+
+                console.log('Three.js scene initialized successfully');
+
+            } catch (error) {
+                console.error('Error initializing Three.js scene:', error);
+                alert('Failed to initialize 3D scene. Please check console for details.');
+            }
+        });
+    </script>
+</body>
+</html>

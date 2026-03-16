@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luzion Fountain Equilibrium - Zylorion 7</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 20px;
+            border-radius: 12px;
+            color: #fff;
+            max-width: 320px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        #ui-overlay h1 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #00d4ff;
+            border-bottom: 2px solid #00d4ff;
+            padding-bottom: 8px;
+        }
+
+        #ui-overlay p {
+            font-size: 12px;
+            line-height: 1.6;
+            color: #b8c5d6;
+            margin-bottom: 12px;
+        }
+
+        .stream-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 3px solid;
+        }
+
+        .stream-card h3 {
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .stream-card .data {
+            font-size: 11px;
+            color: #8daabf;
+        }
+
+        .stream-card .data span {
+            display: block;
+            margin: 2px 0;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 15px 25px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button.active {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+        }
+
+        #stats-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 15px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        #stats-panel .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #stats-panel .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 80px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 12px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 11px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 4px 0;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        #temp-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px 50px;
+            border-radius: 16px;
+            color: #fff;
+            text-align: center;
+            display: none;
+            border: 2px solid #00d4ff;
+            box-shadow: 0 0 50px rgba(0, 212, 255, 0.3);
+        }
+
+        #temp-display h2 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            color: #00d4ff;
+        }
+
+        #temp-display p {
+            font-size: 14px;
+            color: #8daabf;
+        }
+
+        .arrow-indicator {
+            position: absolute;
+            font-size: 24px;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+
+        @keyframes flow {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-100px); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div id="ui-overlay">
+        <h1>🌀 Luzion Fountain Equilibrium</h1>
+        <p>Zylorion 7 Multi-Layered Fountain System</p>
+        <div style="font-size: 10px; color: #667eea; margin-bottom: 10px;">
+            Average Temperature: 5 ZD | Total Mass: 300 Zylorions
+        </div>
+
+        <div class="stream-card" style="border-color: #ff6b6b;">
+            <h3 style="color: #ff6b6b;">🔴 Alpha Stream</h3>
+            <div class="data">
+                <span>Mass: 150 Zylorions</span>
+                <span>Temperature: 20 ZD</span>
+                <span>Flow: Downward (Rate: -3000)</span>
+            </div>
+        </div>
+
+        <div class="stream-card" style="border-color: #4ecdc4;">
+            <h3 style="color: #4ecdc4;">🔵 Beta Stream</h3>
+            <div class="data">
+                <span>Mass: 50 Zylorions</span>
+                <span>Temperature: -10 ZD</span>
+                <span>Flow: Upward (Rate: +500)</span>
+            </div>
+        </div>
+
+        <div class="stream-card" style="border-color: #ffe66d;">
+            <h3 style="color: #ffe66d;">🟡 Gamma Stream</h3>
+            <div class="data">
+                <span>Mass: 100 Zylorions</span>
+                <span>Temperature: 5 ZD</span>
+                <span>Flow: Downward (Rate: -500)</span>
+            </div>
+        </div>
+
+        <div class="stream-card" style="border-color: #95e1d3;">
+            <h3 style="color: #95e1d3;">📊 Flow Balance</h3>
+            <div class="data">
+                <span>Upward: +500</span>
+                <span>Downward: -3500</span>
+                <span style="color: #00d4ff;">Status: Equilibrium Achieved</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="stats-panel">
+        <div class="stat-row">
+            <span>Fountain Status:</span>
+            <span style="color: #00d4ff;">OPERATIONAL</span>
+        </div>
+        <div class="stat-row">
+            <span>Temperature Avg:</span>
+            <span>5 ZD</span>
+        </div>
+        <div class="stat-row">
+            <span>Total Mass:</span>
+            <span>300 Zylorions</span>
+        </div>
+        <div class="stat-row">
+            <span>Particle Count:</span>
+            <span id="particle-count">0</span>
+        </div>
+    </div>
+
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-color" style="background: linear-gradient(135deg, #ff6b6b, #ff8e8e);"></div>
+            <span>Alpha (High Temp) - Downward</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: linear-gradient(135deg, #4ecdc4, #6fd7d0);"></div>
+            <span>Beta (Low Temp) - Upward</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: linear-gradient(135deg, #ffe66d, #fff09b);"></div>
+            <span>Gamma (Mid Temp) - Downward</span>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="rotate-btn">⏸ Pause Rotation</button>
+        <button id="reset-btn">🔄 Reset View</button>
+        <button id="toggle-particles">✨ Toggle Particles</button>
+    </div>
+
+    <div id="temp-display">
+        <h2 id="temp-value">5 ZD</h2>
+        <p>Average Temperature</p>
+        <p style="margin-top: 15px; font-size: 12px;">Equilibrium State Achieved</p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        // Scene setup
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // Camera position
+        camera.position.set(0, 5, 15);
+        camera.lookAt(0, 0, 0);
+
+        // Orbit controls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.5;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+        scene.add(ambientLight);
+
+        const pointLight1 = new THREE.PointLight(0x00d4ff, 1, 100);
+        pointLight1.position.set(5, 10, 5);
+        scene.add(pointLight1);
+
+        const pointLight2 = new THREE.PointLight(0xff6b6b, 0.5, 100);
+        pointLight2.position.set(-5, -5, -5);
+        scene.add(pointLight2);
+
+        const pointLight3 = new THREE.PointLight(0x4ecdc4, 0.5, 100);
+        pointLight3.position.set(5, -5, -5);
+        scene.add(pointLight3);
+
+        // Stream data
+        const streams = [
+            {
+                name: 'Alpha',
+                mass: 150,
+                temperature: 20,
+                flowRate: -3000,
+                direction: 'downward',
+                color: 0xff6b6b,
+                size: 2.5,
+                height: 8
+            },
+            {
+                name: 'Beta',
+                mass: 50,
+                temperature: -10,
+                flowRate: 500,
+                direction: 'upward',
+                color: 0x4ecdc4,
+                size: 1.5,
+                height: 8
+            },
+            {
+                name: 'Gamma',
+                mass: 100,
+                temperature: 5,
+                flowRate: -500,
+                direction: 'downward',
+                color: 0xffe66d,
+                size: 2,
+                height: 8
+            }
+        ];
+
+        // Create tubes for each stream
+        const tubeGeometries = [];
+        const streamMeshes = [];
+
+        streams.forEach((stream, index) => {
+            const geometry = new THREE.CylinderGeometry(stream.size, stream.size, stream.height, 32);
+            const material = new THREE.MeshPhongMaterial({
+                color: stream.color,
+                transparent: true,
+                opacity: 0.6,
+                shininess: 100,
+                emissive: stream.color,
+                emissiveIntensity: 0.2
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.y = stream.height / 2;
+
+            // Position streams in a triangular formation
+            const angle = (index / streams.length) * Math.PI * 2;
+            const radius = 4;
+            mesh.position.x = Math.cos(angle) * radius;
+            mesh.position.z = Math.sin(angle) * radius;
+
+            scene.add(mesh);
+            streamMeshes.push(mesh);
+
+            // Add glow effect
+            const glowGeometry = new THREE.CylinderGeometry(stream.size * 1.2, stream.size * 1.2, stream.height, 32);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: stream.color,
+                transparent: true,
+                opacity: 0.1
+            });
+            const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
+            glowMesh.position.y = stream.height / 2;
+            glowMesh.position.x = mesh.position.x;
+            glowMesh.position.z = mesh.position.z;
+            scene.add(glowMesh);
+        });
+
+        // Create base platform
+        const baseGeometry = new THREE.CylinderGeometry(6, 7, 0.5, 32);
+        const baseMaterial = new THREE.MeshPhongMaterial({
+            color: 0x1a1a2e,
+            transparent: true,
+            opacity: 0.8
+        });
+        const base = new THREE.Mesh(baseGeometry, baseMaterial);
+        base.position.y = -0.25;
+        scene.add(base);
+
+        // Create particles
+        let particles = [];
+        let showParticles = true;
+        const particleCount = 200;
+
+        for (let i = 0; i < particleCount; i++) {
+            const streamIndex = Math.floor(Math.random() * streams.length);
+            const stream = streams[streamIndex];
+
+            const particleGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+            const particleMaterial = new THREE.MeshBasicMaterial({
+                color: stream.color,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+
+            // Initial position
+            const angle = (streamIndex / streams.length) * Math.PI * 2;
+            const radius = 3 + Math.random() * 2;
+            particle.position.x = Math.cos(angle) * radius;
+            particle.position.y = Math.random() * stream.height;
+            particle.position.z = Math.sin(angle) * radius;
+
+            particle.userData = {
+                streamIndex: streamIndex,
+                speed: 0.02 + Math.random() * 0.03,
+                radius: radius,
+                angle: angle
+            };
+
+            scene.add(particle);
+            particles.push(particle);
+        }
+
+        // Update particle count display
+        document.getElementById('particle-count').textContent = particleCount;
+
+        // Create flow arrows
+        const arrows = [];
+        streams.forEach((stream, index) => {
+            const arrowGeometry = new THREE.ConeGeometry(0.3, 1, 8);
+            const arrowMaterial = new THREE.MeshPhongMaterial({
+                color: stream.color,
+                emissive: stream.color,
+                emissiveIntensity: 0.5
+            });
+
+            const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
+            arrow.rotation.x = stream.direction === 'upward' ? Math.PI : 0;
+
+            const angle = (index / streams.length) * Math.PI * 2;
+            const radius = 3;
+            arrow.position.x = Math.cos(angle) * radius;
+            arrow.position.y = stream.height + 0.5;
+            arrow.position.z = Math.sin(angle) * radius;
+
+            scene.add(arrow);
+            arrows.push(arrow);
+        });
+
+        // Create temperature indicators
+        streams.forEach((stream, index) => {
+            const tempGeometry = new THREE.SphereGeometry(0.5, 16, 16);
+            const tempMaterial = new THREE.MeshPhongMaterial({
+                color: stream.temperature < 0 ? 0x4ecdc4 : 0xff6b6b,
+                emissive: stream.temperature < 0 ? 0x4ecdc4 : 0xff6b6b,
+                emissiveIntensity: 0.5
+            });
+
+            const tempSphere = new THREE.Mesh(tempGeometry, tempMaterial);
+            const angle = (index / streams.length) * Math.PI * 2;
+            const radius = 5;
+            tempSphere.position.x = Math.cos(angle) * radius;
+            tempSphere.position.y = stream.height / 2 + 1.5;
+            tempSphere.position.z = Math.sin(angle) * radius;
+
+            tempSphere.userData = {
+                streamName: stream.name,
+                temperature: stream.temperature
+            };
+
+            scene.add(tempSphere);
+        });
+
+        // Temperature display
+        const tempDisplay = document.getElementById('temp-display');
+        const tempValue = document.getElementById('temp-value');
+
+        // Animation loop
+        let isRotating = true;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Rotate stream meshes
+            streamMeshes.forEach((mesh, index) => {
+                mesh.rotation.y += 0.01;
+            });
+
+            // Animate particles
+            if (showParticles) {
+                particles.forEach((particle, index) => {
+                    const stream = streams[particle.userData.streamIndex];
+
+                    if (stream.direction === 'upward') {
+                        particle.position.y += particle.userData.speed;
+                    } else {
+                        particle.position.y -= particle.userData.speed;
+                    }
+
+                    // Reset particle position when it reaches the top or bottom
+                    if (particle.position.y > stream.height || particle.position.y < 0) {
+                        particle.position.y = stream.direction === 'upward' ? 0 : stream.height;
+                        const angle = (stream.index / streams.length) * Math.PI * 2;
+                        const radius = 3 + Math.random() * 2;
+                        particle.position.x = Math.cos(angle) * radius;
+                        particle.position.z = Math.sin(angle) * radius;
+                    }
+                });
+            }
+
+            // Animate arrows
+            arrows.forEach((arrow, index) => {
+                arrow.position.y += 0.05;
+                if (arrow.position.y > streams[index].height + 2) {
+                    arrow.position.y = streams[index].height / 2;
+                }
+            });
+
+            // Pulse temperature indicators
+            scene.traverse((object) => {
+                if (object.userData.streamName) {
+                    const time = Date.now() * 0.002;
+                    object.scale.setScalar(1 + Math.sin(time) * 0.1);
+                }
+            });
+
+            // Update controls
+            controls.update();
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Event listeners
+        document.getElementById('rotate-btn').addEventListener('click', () => {
+            isRotating = !isRotating;
+            controls.autoRotate = isRotating;
+            document.getElementById('rotate-btn').textContent = isRotating ? '⏸ Pause Rotation' : '▶ Resume Rotation';
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            camera.position.set(0, 5, 15);
+            camera.lookAt(0, 0, 0);
+            controls.autoRotate = true;
+            isRotating = true;
+            document.getElementById('rotate-btn').textContent = '⏸ Pause Rotation';
+        });
+
+        document.getElementById('toggle-particles').addEventListener('click', () => {
+            showParticles = !showParticles;
+            document.getElementById('toggle-particles').textContent = showParticles ? '✨ Toggle Particles' : '🚫 Hide Particles';
+        });
+
+        // Window resize handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Display temperature
+        setTimeout(() => {
+            tempDisplay.style.display = 'block';
+            tempValue.textContent = '5 ZD';
+        }, 1000);
+
+        setTimeout(() => {
+            tempDisplay.style.display = 'none';
+        }, 3000);
+    </script>
+</body>
+</html>

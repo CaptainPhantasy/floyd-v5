@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     message_count INTEGER NOT NULL DEFAULT 0 CHECK (message_count >= 0),
     prompt_tokens  INTEGER NOT NULL DEFAULT 0 CHECK (prompt_tokens >= 0),
     completion_tokens  INTEGER NOT NULL DEFAULT 0 CHECK (completion_tokens>= 0),
+    cache_read_tokens INTEGER NOT NULL DEFAULT 0 CHECK (cache_read_tokens >= 0),
     cost REAL NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0),
     updated_at INTEGER NOT NULL,  -- Unix timestamp in milliseconds
     created_at INTEGER NOT NULL   -- Unix timestamp in milliseconds

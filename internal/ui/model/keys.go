@@ -153,8 +153,8 @@ func DefaultKeyMap() KeyMap {
 		key.WithKeys("down"),
 	)
 	km.Editor.AcceptSuggestion = key.NewBinding(
-		key.WithKeys("`"),
-		key.WithHelp("`", "accept suggestion"),
+		key.WithKeys("ctrl+]"),
+		key.WithHelp("ctrl+]", "accept suggestion"),
 	)
 
 	km.Chat.NewSession = key.NewBinding(

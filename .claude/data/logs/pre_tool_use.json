@@ -1,0 +1,581 @@
+[
+  {
+    "timestamp": "2026-02-08T22:50:54.437668",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "find /Volumes/Storage/floyd-main -name \"mcp*.json\" -o -name \"*mcp-config*\" 2>/dev/null",
+      "description": "Find all MCP config files"
+    },
+    "tool_use_id": "call_eb892504fa4e4cecb3c0a5a9"
+  },
+  {
+    "timestamp": "2026-02-08T22:51:10.206413",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "find /Volumes/Storage -name \"*supercache*\" -type d 2>/dev/null | head -5",
+      "description": "Find supercache directory"
+    },
+    "tool_use_id": "call_f24f8e6faebb4c118bef2726"
+  },
+  {
+    "timestamp": "2026-02-08T22:51:10.208537",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "npm list -g 2>/dev/null | grep -i supercache || echo \"Not found via npm\"",
+      "description": "Check if supercache installed globally"
+    },
+    "tool_use_id": "call_12dc6b7b84e341219cc783bc"
+  },
+  {
+    "timestamp": "2026-02-08T22:52:58.339096",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "ls -la /Volumes/Storage/MCP/floyd-supercache-server/",
+      "description": "List supercache server root"
+    },
+    "tool_use_id": "call_ad1abcb6ef9d493c9e1f3a1f"
+  },
+  {
+    "timestamp": "2026-02-08T22:53:02.302961",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "find /Volumes/Storage/MCP/floyd-supercache-server/src -type f -name \"*.ts\" -o -name \"*.js\"",
+      "description": "Find source files"
+    },
+    "tool_use_id": "call_eb0c3e21026445d199ac56a0"
+  },
+  {
+    "timestamp": "2026-02-08T22:53:28.066860",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Edit",
+    "tool_input": {
+      "file_path": "/Volumes/Storage/MCP/floyd-supercache-server/src/index.ts",
+      "old_string": "            // Tag match\n            for (const tag of entry.tags) {\n              if (tag.toLowerCase().includes(queryLower)) {\n                score += 3;\n              }\n            }",
+      "new_string": "            // Tag match\n            if (entry.tags && Array.isArray(entry.tags)) {\n              for (const tag of entry.tags) {\n                if (tag && typeof tag === 'string' && tag.toLowerCase().includes(queryLower)) {\n                  score += 3;\n                }\n              }\n            }",
+      "replace_all": false
+    },
+    "tool_use_id": "call_8fb203b390e344d1ad12bcdb"
+  },
+  {
+    "timestamp": "2026-02-08T22:53:49.552378",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "cd /Volumes/Storage/MCP/floyd-supercache-server && npm run build",
+      "description": "Build supercache server"
+    },
+    "tool_use_id": "call_eca572745f82483bb349b949"
+  },
+  {
+    "timestamp": "2026-02-08T22:53:57.954268",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "pkill -f \"floyd-supercache-server\" || echo \"No process found\"",
+      "description": "Kill supercache server"
+    },
+    "tool_use_id": "call_4657fec7bd034008b95bc590"
+  },
+  {
+    "timestamp": "2026-02-08T22:54:07.665920",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "ps aux | grep -i supercache | grep -v grep",
+      "description": "Find supercache process"
+    },
+    "tool_use_id": "call_7dddedad87d94e3a958ee96a"
+  },
+  {
+    "timestamp": "2026-02-08T22:54:11.714879",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "kill 56066 && sleep 1 && ps aux | grep -i supercache | grep -v grep",
+      "description": "Kill and verify supercache restart"
+    },
+    "tool_use_id": "call_67fecbe0932a491cba92aa7f"
+  },
+  {
+    "timestamp": "2026-02-08T22:54:17.495662",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "ps aux | grep -i supercache | grep -v grep",
+      "description": "Check supercache process"
+    },
+    "tool_use_id": "call_468bc12b42aa4613bf9b51a2"
+  },
+  {
+    "timestamp": "2026-02-08T22:54:25.173539",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "cd /Volumes/Storage/MCP/floyd-supercache-server/dist && node index.js &",
+      "description": "Start supercache server manually",
+      "run_in_background": true
+    },
+    "tool_use_id": "call_824cbc9bc7ce4f018bd2e21d"
+  },
+  {
+    "timestamp": "2026-02-08T22:54:33.260743",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "sleep 2 && ps aux | grep -i supercache | grep -v grep",
+      "description": "Check if server is running"
+    },
+    "tool_use_id": "call_d6c648edeb4d4194b9f2845e"
+  },
+  {
+    "timestamp": "2026-02-08T22:54:40.004240",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "grep -A 5 \"Tag match\" /Volumes/Storage/MCP/floyd-supercache-server/dist/index.js",
+      "description": "Check if compiled code has the fix"
+    },
+    "tool_use_id": "call_c8aa7cd5f53e40b180235440"
+  },
+  {
+    "timestamp": "2026-02-08T22:54:58.926821",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Edit",
+    "tool_input": {
+      "file_path": "/Volumes/Storage/MCP/floyd-supercache-server/src/index.ts",
+      "old_string": "            let score = 0;\n            const valueStr = JSON.stringify(entry.value).toLowerCase();",
+      "new_string": "            let score = 0;\n            const valueJson = JSON.stringify(entry.value ?? '');\n            const valueStr = valueJson?.toLowerCase() ?? '';",
+      "replace_all": false
+    },
+    "tool_use_id": "call_1f5aa311482148839512ae93"
+  },
+  {
+    "timestamp": "2026-02-08T22:54:59.026234",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "cd /Volumes/Storage/MCP/floyd-supercache-server && npm run build",
+      "description": "Rebuild with fix"
+    },
+    "tool_use_id": "call_0d62d7ebc4f242e2aa2ed9e9"
+  },
+  {
+    "timestamp": "2026-02-08T22:55:34.428168",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "find /Volumes/Storage/floyd-main -type d -name \"*cache*\" 2>/dev/null | head -20",
+      "description": "Find cache-related directories"
+    },
+    "tool_use_id": "call_95fbab7ddb2a41dea3e5c1ac"
+  },
+  {
+    "timestamp": "2026-02-08T22:55:37.289364",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "ls -la /Volumes/Storage/ | grep -i floyd",
+      "description": "List Floyd-related directories"
+    },
+    "tool_use_id": "call_fe7b6c0b37bf44818504d02c"
+  },
+  {
+    "timestamp": "2026-02-08T22:55:40.439911",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "find /Volumes/Storage -type f -name \"*.go\" -path \"*cache*\" -o -type d -name \"*cache*\" 2>/dev/null | grep -i floyd | head -20",
+      "description": "Find Floyd cache directories"
+    },
+    "tool_use_id": "call_368b759c6f5c4786b37da5a9"
+  },
+  {
+    "timestamp": "2026-02-08T22:57:43.660172",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "cat /private/tmp/claude-501/-Volumes-Storage-floyd-main/tasks/bd277c4.output 2>/dev/null || echo \"No output yet\"",
+      "description": "Check background command output"
+    },
+    "tool_use_id": "call_68ba5b98ba5f4152b0510985"
+  },
+  {
+    "timestamp": "2026-02-08T22:57:47.123223",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "ls -la /Volumes/Storage/floyd-main/.claude/mcp-servers.json 2>/dev/null || cat /Volumes/Storage/floyd-main/.claude/config.json 2>/dev/null || cat /Volumes/Storage/floyd-main/.claude/claude_desktop_config.json 2>/dev/null",
+      "description": "Check Claude MCP configuration"
+    },
+    "tool_use_id": "call_3c8c1a455be3447c95fc6bef"
+  },
+  {
+    "timestamp": "2026-02-08T22:57:48.961533",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "cat /volumes/storage/floyd-main/.claude/settings.json 2>/dev/null || cat ~/.claude/settings.json 2>/dev/null",
+      "description": "Check Claude settings"
+    },
+    "tool_use_id": "call_b8909feee45041c3b0aa3726"
+  },
+  {
+    "timestamp": "2026-02-08T22:57:53.789127",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "find /Volumes/Storage/floyd-main -type f -name \"*.go\" | xargs grep -l \"cache_search\\|CacheSearch\" 2>/dev/null | head -10",
+      "description": "Find files with cache_search function"
+    },
+    "tool_use_id": "call_95e388ed588349b7b440d037"
+  },
+  {
+    "timestamp": "2026-02-08T22:57:56.949342",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "find /Volumes/Storage/floyd-main -type f \\( -name \"*.ts\" -o -name \"*.js\" -o -name \"*.go\" \\) | xargs grep -l \"toLowerCase\" 2>/dev/null",
+      "description": "Find files with toLowerCase usage"
+    },
+    "tool_use_id": "call_d6859963bdb84b9f8a2fd087"
+  },
+  {
+    "timestamp": "2026-02-08T22:58:01.257978",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "grep -rn \"toLowerCase\" /Volumes/Storage/floyd-main/.floyd --include=\"*.ts\" --include=\"*.js\" 2>/dev/null | head -30",
+      "description": "Search for toLowerCase in .floyd directory"
+    },
+    "tool_use_id": "call_84bf98e4bc41490aada89aa8"
+  },
+  {
+    "timestamp": "2026-02-08T22:58:03.752908",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "find /Volumes/Storage -type d -name \"supercache\" -o -type d -name \"floyd-supercache\" 2>/dev/null",
+      "description": "Find supercache directory"
+    },
+    "tool_use_id": "call_ed2a509c7b2e414ba8c00389"
+  },
+  {
+    "timestamp": "2026-02-08T22:59:53.842408",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "kill $(pgrep -f \"floyd-supercache-server/dist/index.js\") 2>/dev/null; cd /Volumes/Storage/MCP/floyd-supercache-server/dist && node index.js </dev/null >/dev/null 2>&1 &",
+      "description": "Restart supercache server with new code"
+    },
+    "tool_use_id": "call_17b37e5973e74309a6c91537"
+  },
+  {
+    "timestamp": "2026-02-08T23:00:16.024247",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "grep -r \"supercache\" /Volumes/Storage/floyd-main --include=\"*.json\" --include=\"*.go\" 2>/dev/null | head -20",
+      "description": "Search for supercache references in code"
+    },
+    "tool_use_id": "call_488027c436584573a83b09ce"
+  },
+  {
+    "timestamp": "2026-02-08T23:00:30.453057",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "ls -la /Volumes/Storage/MCP/floyd-supercache-server/ 2>/dev/null || echo \"Directory not found\"",
+      "description": "Check if supercache server directory exists"
+    },
+    "tool_use_id": "call_b3841c4bb6be479488c0e0be"
+  },
+  {
+    "timestamp": "2026-02-08T23:00:32.461799",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "ps aux | grep -i supercache | grep -v grep",
+      "description": "Check if supercache server is running"
+    },
+    "tool_use_id": "call_7ceb81f47c254191830a7d53"
+  },
+  {
+    "timestamp": "2026-02-08T23:00:49.406249",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "cat /Volumes/Storage/MCP/floyd-supercache-server/src/index.ts 2>/dev/null | head -100",
+      "description": "Read supercache server source to see available tools"
+    },
+    "tool_use_id": "call_e2b4c148365f4cabb99d05ea"
+  },
+  {
+    "timestamp": "2026-02-08T23:00:51.852931",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "grep -A 20 \"cache_search\\|name.*search\" /Volumes/Storage/MCP/floyd-supercache-server/src/index.ts",
+      "description": "Search for cache_search tool definition"
+    },
+    "tool_use_id": "call_8ff19f333d714e59a7cb8f07"
+  },
+  {
+    "timestamp": "2026-02-08T23:00:57.037628",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "ls -la ~/.floyd/supercache/ 2>/dev/null",
+      "description": "Check supercache storage directory"
+    },
+    "tool_use_id": "call_27d30cae45f2444485173614"
+  },
+  {
+    "timestamp": "2026-02-08T23:00:59.531162",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "curl -s -X POST -H \"Content-Type: application/json\" \\\n  --json '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\",\"params\":{}}' \\\n  http://localhost:3000 2>/dev/null || echo \"Server not responding on HTTP - likely using stdio\"",
+      "description": "Try to contact MCP server directly"
+    },
+    "tool_use_id": "call_f87cc26e52da418fa686c818"
+  },
+  {
+    "timestamp": "2026-02-08T23:01:02.726132",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "grep -A 20 \"floyd-supercache\" /Volumes/Storage/floyd-main/internal/config/load.go",
+      "description": "Check supercache MCP configuration"
+    },
+    "tool_use_id": "call_07305171f197461187de1a1a"
+  },
+  {
+    "timestamp": "2026-02-08T23:01:09.244515",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "cat /Volumes/Storage/floyd-main/.claude/config.json 2>/dev/null | head -100",
+      "description": "Check Claude config for MCP server settings"
+    },
+    "tool_use_id": "call_bc2f7b508e124951a63c94ff"
+  },
+  {
+    "timestamp": "2026-02-08T23:01:11.375298",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "cat ~/.config/claude/claude_desktop_config.json 2>/dev/null | head -100",
+      "description": "Check Claude desktop config for MCP servers"
+    },
+    "tool_use_id": "call_5510cfcb26214670ae4606c5"
+  },
+  {
+    "timestamp": "2026-02-08T23:01:12.937500",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "find ~ -name \"*claude*config*\" -type f 2>/dev/null | head -5",
+      "description": "Find Claude config files"
+    },
+    "tool_use_id": "call_9cedbe0604534f37b8098be7"
+  },
+  {
+    "timestamp": "2026-02-08T23:03:00.298829",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "cat \"/Users/douglastalley/Library/Application Support/Claude/claude_desktop_config.json\"",
+      "description": "Read Claude desktop config"
+    },
+    "tool_use_id": "call_bf3e459e9cf246318c445fd4"
+  },
+  {
+    "timestamp": "2026-02-08T23:03:07.858344",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "grep -B 5 -A 30 \"ListToolsRequestSchema\" /Volumes/Storage/MCP/floyd-supercache-server/src/index.ts",
+      "description": "Find how tools are registered in supercache"
+    },
+    "tool_use_id": "call_006c37d8e0bd4b509b592af5"
+  },
+  {
+    "timestamp": "2026-02-08T23:03:09.934606",
+    "session_id": "1e290728-3f9d-433e-b8fc-c32d26495fa5",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/1e290728-3f9d-433e-b8fc-c32d26495fa5.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "grep -B 10 \"TOOL_DEFINITIONS\" /Volumes/Storage/MCP/floyd-supercache-server/src/index.ts | head -50",
+      "description": "Find TOOL_DEFINITIONS"
+    },
+    "tool_use_id": "call_8aaaf6faa0aa409598cc264b"
+  }
+]

@@ -7,7 +7,9 @@ import (
 	tea "charm.land/bubbletea/v2"
 	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/sahilm/fuzzy"
+	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/legacy-ai/floyd/internal/agents"
 	"github.com/legacy-ai/floyd/internal/ui/common"
@@ -41,6 +43,8 @@ type AgentLibrary struct {
 	categories       []AgentCategory
 	selectedCategory int // 0 = All
 	categoryCounts   map[string]int
+
+	filterTimer *time.Timer
 
 	keyMap struct {
 		Select       key.Binding
@@ -159,13 +163,15 @@ func (a *AgentLibrary) loadAgents(dirs []string) {
 		loaded, err := agents.LoadAgents(dir)
 		if err == nil {
 			for _, agent := range loaded {
-				if !seen[agent.Name] {
-					a.agents = append(a.agents, agent)
-					seen[agent.Name] = true
-					// Count by category
-					if agent.Category != "" {
-						a.categoryCounts[agent.Category]++
-					}
+				if seen[agent.Name] {
+					slog.Debug("Skipping duplicate agent", "name", agent.Name, "path", agent.FilePath)
+					continue
+				}
+				a.agents = append(a.agents, agent)
+				seen[agent.Name] = true
+				// Count by category
+				if agent.Category != "" {
+					a.categoryCounts[agent.Category]++
 				}
 			}
 		}

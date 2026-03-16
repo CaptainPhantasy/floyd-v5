@@ -1,0 +1,16 @@
+--- /Volumes/Storage/floyd/internal/ui/dialog/skills_library.go
++++ /Volumes/Storage/floyd/internal/ui/dialog/skills_library.go
+@@ -501,11 +501,13 @@
+ 		if s.focused && s.skill.Category != "" {
+ 			badge := s.t.Subtle.Render(" [" + s.skill.Category + "]")
+ 			name = name + badge
+ 		}
+ 
+ 		description := s.skill.Description
++		if s.focused {
++			description = s.t.Primary.Render(description)
++		}
+ 		if s.expanded {
+ 			// Show preview of skill instructions when expanded
+ 			preview := s.skill.Instructions
+ 			if len(preview) > 300 {

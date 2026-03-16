@@ -207,11 +207,11 @@ func ToPromptXML() string {
 			sb.WriteString("<mcp_servers>\n")
 			first = false
 		}
-		fmt.Fprintf(&sb, "  <server name=%q>\n", escape(name))
+		// Only inject the server name and the available tool names.
+		// Exclude the long, verbose tool descriptions to prevent massive token bloat during prompt caching.
+		sb.WriteString(fmt.Sprintf("  <server name=%q>\n", escape(name)))
 		for _, t := range tools {
-			fmt.Fprintf(&sb, "    <tool name=%q>\n", escape(t.Name))
-			fmt.Fprintf(&sb, "      <description>%s</description>\n", escape(t.Description))
-			sb.WriteString("    </tool>\n")
+			sb.WriteString(fmt.Sprintf("    <tool name=%q />\n", escape(t.Name)))
 		}
 		sb.WriteString("  </server>\n")
 	}

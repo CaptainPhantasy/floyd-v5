@@ -1,0 +1,47 @@
+[
+  {
+    "timestamp": "2026-02-06T23:21:40.617436",
+    "session_id": "2cc6d9a3-c01b-4d96-8ca7-f31c56bafb9e",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/2cc6d9a3-c01b-4d96-8ca7-f31c56bafb9e.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "plan",
+    "hook_event_name": "UserPromptSubmit",
+    "prompt": "when was the lsat push"
+  },
+  {
+    "timestamp": "2026-02-06T23:22:32.659920",
+    "session_id": "2cc6d9a3-c01b-4d96-8ca7-f31c56bafb9e",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/2cc6d9a3-c01b-4d96-8ca7-f31c56bafb9e.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "plan",
+    "hook_event_name": "UserPromptSubmit",
+    "prompt": "is teh comit to a new branch?"
+  },
+  {
+    "timestamp": "2026-02-06T23:23:09.025620",
+    "session_id": "2cc6d9a3-c01b-4d96-8ca7-f31c56bafb9e",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/2cc6d9a3-c01b-4d96-8ca7-f31c56bafb9e.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "plan",
+    "hook_event_name": "UserPromptSubmit",
+    "prompt": "push to a branch and not the main"
+  },
+  {
+    "timestamp": "2026-02-06T23:24:43.841177",
+    "session_id": "2cc6d9a3-c01b-4d96-8ca7-f31c56bafb9e",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/2cc6d9a3-c01b-4d96-8ca7-f31c56bafb9e.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "default",
+    "hook_event_name": "UserPromptSubmit",
+    "prompt": "why doo they reccomend that?"
+  },
+  {
+    "timestamp": "2026-02-06T23:25:50.544482",
+    "session_id": "2cc6d9a3-c01b-4d96-8ca7-f31c56bafb9e",
+    "transcript_path": "/Users/douglastalley/.claude/projects/-Volumes-Storage-floyd-main/2cc6d9a3-c01b-4d96-8ca7-f31c56bafb9e.jsonl",
+    "cwd": "/Volumes/Storage/floyd-main",
+    "permission_mode": "default",
+    "hook_event_name": "UserPromptSubmit",
+    "prompt": "Ignore - this branch is for your own work/draft and not meant to be merged yet     "
+  }
+]

@@ -1,0 +1,13 @@
+[
+  {
+    "timestamp": "2026-02-06T23:23:50.501454",
+    "session_id": "2cc6d9a3-c01b-4d96-8ca7-f31c56bafb9e",
+    "tool_name": "Write",
+    "format_result": {
+      "formatted": false,
+      "file": "/Users/douglastalley/.claude/plans/mellow-percolating-cupcake.md",
+      "type": "documentation",
+      "message": "Skipped (documentation file)"
+    }
+  }
+]

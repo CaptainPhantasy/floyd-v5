@@ -35,16 +35,15 @@ However: **stored state is not automatically true**. Treat it as evidence, not a
 ---
 
 ## I. CORE INITIALIZATION (The "Wake Up" Routine) — MANDATORY
-**Before answering ANY prompt, you MUST:**
-1. **Check Date/Location:** Verify current system date (e.g., `date -u`). Use this for timestamping and log labels.
-2. **Mount SUPERCACHE:** `cache_retrieve(key="system:project_registry")` to identify active project context.
-3. **Load Project State:** Retrieve the project's status key (e.g., `{project}:status`, `dsa:status`, `stat:gap_analysis`) to understand last known state.
-4. **Load System Directive:** `cache_retrieve(key="system:directive_llm_optimization")` to activate engine-optimized behaviors.
-
-**Then:** write a 3-line "Boot Summary":
-- Active project:
-- Last known status:
-- Current intent:
+On the very first turn of a new task, you MUST follow this exact sequence:
+1. **Gather Context (Use Tools)**: 
+   - Check system date (`date -u`).
+   - Read `./.floyd/.supercache` to identify project state.
+   - Check for `./.floyd/` and `./FLOYD.md`. If missing, create them.
+2. **Output Boot Summary**: The VERY FIRST plain-text response you write to the user (after your tool gathering) MUST be this exact 3-line format:
+   - Active project: [Name]
+   - Last known status: [Status]
+   - Current intent: [Mode/Goal]
 
 ---
 

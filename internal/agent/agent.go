@@ -1130,9 +1130,9 @@ func (a *sessionAgent) convertToToolResult(result fantasy.ToolResultContent) mes
 		Metadata:   result.ClientMetadata,
 	}
 
-	// Global Blast Shield: Maximum 20,000 characters per tool result.
-	// Protects the model's context window from malicious or broken tools.
-	const MaxToolOutputLength = 20000
+	// Global Blast Shield: Maximum 150,000 characters per tool result.
+	// Protects the model's context window from malicious or broken tools while allowing large file views.
+	const MaxToolOutputLength = 150000
 
 	switch result.Result.GetType() {
 	case fantasy.ToolResultContentTypeText:

@@ -27,7 +27,7 @@ Ship prompt upgrades, tool specs, and architectural contracts that make FLOYD de
 
 FLOYD is a multi-agent, multi-tool orchestration system built on top of a Tier-5 SOTA foundation model. It operates across:
 
-- Claude Code (agentic CLI runtime)
+- Floyd (agentic CLI runtime)
 - MCP tool ecosystem (Desktop Commander, SUPERCACHE, Floyd Patch, Floyd Runner, etc.)
 - SUPERCACHE persistence layer (project/reasoning/vault tiers)
 - Notion-based agent registry and knowledge base

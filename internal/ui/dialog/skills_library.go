@@ -353,15 +353,9 @@ func (s *SkillsLibrary) HandleMsg(msg tea.Msg) Action {
 			s.input, cmd = s.input.Update(msg)
 			value := s.input.Value()
 
-			// 150ms Debounce
-			if s.filterTimer != nil {
-				s.filterTimer.Stop()
-			}
-			s.filterTimer = time.AfterFunc(150*time.Millisecond, func() {
-				s.list.SetFilter(value)
-				s.list.ScrollToTop()
-				s.list.SetSelected(0)
-			})
+			s.list.SetFilter(value)
+			s.list.ScrollToTop()
+			s.list.SetSelected(0)
 
 			return ActionCmd{cmd}
 		}
