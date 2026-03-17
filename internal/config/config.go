@@ -49,6 +49,22 @@ const (
 	SelectedModelTypeSmall SelectedModelType = "small"
 )
 
+type RuntimeProfile string
+
+const (
+	RuntimeProfileFloyd      RuntimeProfile = "floyd"
+	RuntimeProfileSuperFloyd RuntimeProfile = "superfloyd"
+)
+
+func NormalizeRuntimeProfile(v string) RuntimeProfile {
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case string(RuntimeProfileSuperFloyd), "safe", "balanced", "balance", "beast", "sf":
+		return RuntimeProfileSuperFloyd
+	default:
+		return RuntimeProfileFloyd
+	}
+}
+
 const (
 	AgentCoder string = "coder"
 	AgentTask  string = "task"
@@ -153,9 +169,9 @@ func (pc *ProviderConfig) SetupGitHubCopilot() {
 type MCPType string
 
 const (
-	MCPStdio         MCPType = "stdio"
-	MCPSSE           MCPType = "sse"
-	MCPHttp          MCPType = "http"
+	MCPStdio          MCPType = "stdio"
+	MCPSSE            MCPType = "sse"
+	MCPHttp           MCPType = "http"
 	MCPStreamableHttp MCPType = "streamable-http" // MCP 2.0 streamable HTTP transport
 )
 
@@ -235,6 +251,7 @@ func (Attribution) JSONSchemaExtend(schema *jsonschema.Schema) {
 
 type Options struct {
 	ContextPaths              []string     `json:"context_paths,omitempty" jsonschema:"description=Paths to files containing context information for the AI,example=.cursorrules,example=CRUSH.md"`
+	RuntimeProfile            string       `json:"runtime_profile,omitempty" jsonschema:"description=Runtime behavior profile,enum=floyd,enum=superfloyd,default=floyd"`
 	SkillsPaths               []string     `json:"skills_paths,omitempty" jsonschema:"description=Paths to directories containing Agent Skills (folders with SKILL.md files),example=~/.config/floyd/skills,example=./skills"`
 	TUI                       *TUIOptions  `json:"tui,omitempty" jsonschema:"description=Terminal user interface options"`
 	Debug                     bool         `json:"debug,omitempty" jsonschema:"description=Enable debug logging,default=false"`

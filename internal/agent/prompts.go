@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	_ "embed"
+	"os"
 
 	"github.com/legacy-ai/floyd/internal/agent/prompt"
 	"github.com/legacy-ai/floyd/internal/config"
@@ -25,9 +26,14 @@ var initializePromptTmpl []byte
 var floydProtocolTmpl []byte
 
 func coderPrompt(opts ...prompt.Option) (*prompt.Prompt, error) {
-	// Select template based on binary name (floyd vs superfloyd)
+	// Select template based on runtime profile, with binary-name fallback for compatibility.
 	var tmpl []byte
-	if version.BinaryName == "superfloyd" {
+	profile := config.NormalizeRuntimeProfile(os.Getenv("FLOYD_RUNTIME_PROFILE"))
+	if profile == config.RuntimeProfileFloyd && version.BinaryName == "superfloyd" {
+		profile = config.RuntimeProfileSuperFloyd
+	}
+
+	if profile == config.RuntimeProfileSuperFloyd {
 		tmpl = superfloydCoderPromptTmpl
 	} else {
 		tmpl = floydGeneralPromptTmpl

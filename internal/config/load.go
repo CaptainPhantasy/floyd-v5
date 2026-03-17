@@ -363,6 +363,9 @@ func (c *Config) setDefaults(workingDir, dataDir string) {
 	if c.Options.ContextPaths == nil {
 		c.Options.ContextPaths = []string{}
 	}
+	if c.Options.RuntimeProfile == "" {
+		c.Options.RuntimeProfile = string(RuntimeProfileFloyd)
+	}
 	if c.Options.SkillsPaths == nil {
 		c.Options.SkillsPaths = []string{}
 	}
@@ -416,6 +419,12 @@ func (c *Config) setDefaults(workingDir, dataDir string) {
 
 	if str, ok := os.LookupEnv("FLOYD_DISABLE_DEFAULT_PROVIDERS"); ok {
 		c.Options.DisableDefaultProviders, _ = strconv.ParseBool(str)
+	}
+
+	if str, ok := os.LookupEnv("FLOYD_RUNTIME_PROFILE"); ok {
+		c.Options.RuntimeProfile = string(NormalizeRuntimeProfile(str))
+	} else {
+		c.Options.RuntimeProfile = string(NormalizeRuntimeProfile(c.Options.RuntimeProfile))
 	}
 
 	if c.Options.Attribution == nil {

@@ -69,12 +69,32 @@ func autoStabilizeEnabled() bool {
 
 func isSuperFloydBinary() bool {
 	name := strings.ToLower(strings.TrimSpace(filepathBase(os.Args[0])))
-	return strings.Contains(name, "superfloyd") ||
-		name == "beast" ||
-		name == "balanced" ||
-		name == "balance" ||
-		name == "safe" ||
-		name == "sf"
+	return profileFromBinaryName(name) == config.RuntimeProfileSuperFloyd
+}
+
+func profileFromBinaryName(name string) config.RuntimeProfile {
+	switch strings.ToLower(strings.TrimSpace(name)) {
+	case "beast", "balanced", "balance", "safe", "sf":
+		return config.RuntimeProfileSuperFloyd
+	}
+	if strings.Contains(strings.ToLower(strings.TrimSpace(name)), "superfloyd") {
+		return config.RuntimeProfileSuperFloyd
+	}
+	return config.RuntimeProfileFloyd
+}
+
+func resolveRuntimeProfile(cfg *config.Config, binName string) config.RuntimeProfile {
+	if cfg != nil && cfg.Options != nil {
+		if profile := strings.TrimSpace(cfg.Options.RuntimeProfile); profile != "" {
+			return config.NormalizeRuntimeProfile(profile)
+		}
+	}
+
+	if envProfile := strings.TrimSpace(os.Getenv("FLOYD_RUNTIME_PROFILE")); envProfile != "" {
+		return config.NormalizeRuntimeProfile(envProfile)
+	}
+
+	return profileFromBinaryName(binName)
 }
 
 func SetupSuperFloydMode(binName string) {

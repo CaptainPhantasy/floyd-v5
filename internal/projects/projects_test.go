@@ -11,6 +11,7 @@ func TestRegisterAndList(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Override the projects file path for testing
+	t.Setenv("FLOYD_GLOBAL_DATA", "")
 	t.Setenv("XDG_DATA_HOME", tmpDir)
 
 	// Test registering a project
@@ -60,6 +61,7 @@ func TestRegisterAndList(t *testing.T) {
 
 func TestRegisterUpdatesExisting(t *testing.T) {
 	tmpDir := t.TempDir()
+	t.Setenv("FLOYD_GLOBAL_DATA", "")
 	t.Setenv("XDG_DATA_HOME", tmpDir)
 
 	// Register a project
@@ -96,6 +98,7 @@ func TestRegisterUpdatesExisting(t *testing.T) {
 
 func TestLoadEmptyFile(t *testing.T) {
 	tmpDir := t.TempDir()
+	t.Setenv("FLOYD_GLOBAL_DATA", "")
 	t.Setenv("XDG_DATA_HOME", tmpDir)
 
 	// List before any projects exist
@@ -111,6 +114,7 @@ func TestLoadEmptyFile(t *testing.T) {
 
 func TestProjectsFilePath(t *testing.T) {
 	tmpDir := t.TempDir()
+	t.Setenv("FLOYD_GLOBAL_DATA", "")
 	t.Setenv("XDG_DATA_HOME", tmpDir)
 
 	expected := filepath.Join(tmpDir, "floyd", "projects.json")
@@ -123,6 +127,7 @@ func TestProjectsFilePath(t *testing.T) {
 
 func TestRegisterWithParentDataDir(t *testing.T) {
 	tmpDir := t.TempDir()
+	t.Setenv("FLOYD_GLOBAL_DATA", "")
 	t.Setenv("XDG_DATA_HOME", tmpDir)
 
 	// Register a project where .floyd is in a parent directory.
@@ -152,6 +157,7 @@ func TestRegisterWithParentDataDir(t *testing.T) {
 
 func TestRegisterWithExternalDataDir(t *testing.T) {
 	tmpDir := t.TempDir()
+	t.Setenv("FLOYD_GLOBAL_DATA", "")
 	t.Setenv("XDG_DATA_HOME", tmpDir)
 
 	// Register a project where .floyd is in a completely different location.

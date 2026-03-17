@@ -256,6 +256,16 @@ func getProviderOptions(model Model, providerCfg config.ProviderConfig) fantasy.
 		return options
 	}
 
+	// SOTA: FLOYD_THINKING_LEVEL env var integration - forces thinking on when set to MAX
+	if thinkingLevel := os.Getenv("FLOYD_THINKING_LEVEL"); thinkingLevel == "MAX" || thinkingLevel == "max" {
+		if model.CatwalkCfg.CanReason {
+			mergedOptions["thinking"] = map[string]any{
+				"budget_tokens": 4000, // MAX level gets higher budget
+			}
+			slog.Info("SOTA: FLOYD_THINKING_LEVEL=MAX enabled, forcing thinking mode", "model", model.CatwalkCfg.ID)
+		}
+	}
+
 	providerType := providerCfg.Type
 	if providerType == "hyper" {
 		if strings.Contains(model.CatwalkCfg.ID, "claude") {

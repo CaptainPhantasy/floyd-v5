@@ -220,8 +220,13 @@ func setupApp(cmd *cobra.Command) (*app.App, error) {
 		return nil, err
 	}
 
-	// Initialize SuperFloyd mode if binary name matches
-	SetupSuperFloydMode(filepath.Base(os.Args[0]))
+	profile := resolveRuntimeProfile(cfg, filepath.Base(os.Args[0]))
+	cfg.Options.RuntimeProfile = string(profile)
+	_ = os.Setenv("FLOYD_RUNTIME_PROFILE", string(profile))
+
+	if profile == config.RuntimeProfileSuperFloyd {
+		SetupSuperFloydMode(filepath.Base(os.Args[0]))
+	}
 
 	telemetry.InitDefault(shouldEnableMetrics(), telemetry.DefaultAdditionalData())
 	telemetry.Default().Track(telemetry.EventCLIStart, map[string]any{
