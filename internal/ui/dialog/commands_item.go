@@ -46,7 +46,10 @@ func NewCommandItemWithDescription(t *styles.Styles, id, title, description, sho
 
 // Filter implements ListItem.
 func (c *CommandItem) Filter() string {
-	return c.title + " " + c.description
+	if c.description != "" {
+		return c.title + " • " + c.description
+	}
+	return c.title
 }
 
 // ID implements ListItem.
@@ -88,24 +91,29 @@ func (c *CommandItem) Shortcut() string {
 func (c *CommandItem) Render(width int) string {
 	styles := ListItemStyles{
 		ItemBlurred:     c.t.Dialog.NormalItem,
-		ItemFocused:     c.t.Dialog.SelectedItem,
-		InfoTextBlurred: c.t.Base,
-		InfoTextFocused: c.t.Base,
+		ItemFocused:     c.t.Dialog.SelectedItem.Bold(true),
+		InfoTextBlurred: c.t.Subtle,
+		InfoTextFocused: c.t.Subtle,
 	}
 
 	displayTitle := c.title
-	displayDescription := c.shortcut
-
-	if c.description != "" {
-		if c.expanded {
-			displayDescription = c.description
-		} else if c.shortcut != "" {
-			displayTitle = c.title + " (" + c.shortcut + ")"
-			displayDescription = c.description
-		} else {
-			displayDescription = c.description
-		}
+	displayInfo := ""
+	
+	if c.shortcut != "" {
+		// Define the SOTA structural pill and use native padding
+		displayInfo = " [" + c.shortcut + "]" 
 	}
 
-	return renderItem(styles, displayTitle, displayDescription, c.focused, width, c.cache, &c.m)
+	if c.description != "" {
+		// Embed styles seamlessly without misaligning the visible string indices
+		var metaStyle string
+		if c.focused {
+			metaStyle = c.t.Subtle.Render(" • " + c.description)
+		} else {
+			metaStyle = c.t.Muted.Render(" • " + c.description)
+		}
+		displayTitle = c.title + metaStyle
+	}
+
+	return renderItem(styles, displayTitle, displayInfo, c.focused, width, c.cache, &c.m)
 }

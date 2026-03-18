@@ -130,3 +130,6 @@ Provide your source material and specify:
 3. Whether to include failure path variants (yes/no)
 
 Output all three JSON artifacts in sequence, clearly labeled.
+
+---
+

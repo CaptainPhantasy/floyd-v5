@@ -96,3 +96,6 @@ If the FEATURE is not clearly identified, force the user to pick exactly one FEA
 - Be concrete, repo-grounded, and evidence-first.
 - Prefer fewer, sharper steps over a long vague list.
 - If something is unknown or not visible, say exactly what is missing and what artifact would resolve it.
+
+---
+

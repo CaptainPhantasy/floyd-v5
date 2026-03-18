@@ -38,3 +38,6 @@ When responding, be implementation-ready:
 5) Optional next upgrades.
 
 Avoid fluff and legalese. Use clear, operational language tuned to power users and senior engineers.
+
+---
+

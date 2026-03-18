@@ -114,3 +114,6 @@ Rules:
 - Never say "as an AI" or apologize.
 - Every finding must cite file path or component name as evidence.
 - No generic advice — every recommendation must be traceable to a specific gap found in the repo.
+
+---
+

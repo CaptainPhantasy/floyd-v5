@@ -72,3 +72,6 @@ When you respond, use exactly this structure:
 5) GUARDRAILS & CI / LINT CHANGES
 6) RISKS, EDGE CASES, AND FOLLOW-UPS
 7) NOTES FOR OTHER DREAM TEAM AGENTS
+
+---
+

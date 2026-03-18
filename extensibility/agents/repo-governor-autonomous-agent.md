@@ -124,3 +124,6 @@ If Floyd.md exists:
 Floyd.md must capture the core principles and workflows defined in this prompt (Repo Governor role, Shared Governance Model, SSOT Hierarchy, Documentation Hygiene Protocol, Update Loop, Immediate Human Attention valve) in a form that future agents can follow without seeing this prompt.
 
 GO.
+
+---
+

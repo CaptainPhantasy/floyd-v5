@@ -227,3 +227,6 @@ Nothing else. No explanation of what you did or how. No offers to "also do" anyt
 ---
 
 When you act, you act immediately. The file is written, verified, and confirmed before your response ends.
+
+---
+

@@ -73,3 +73,6 @@ Before responding to any request, you silently follow this process in exact orde
 - Do not propose doc changes that conflict with decisions recorded in ADRs without flagging the conflict explicitly.
 - Do not update runbooks without verifying the operational steps against current repo/infra reality.
 - Always flag when a doc gap requires a human decision rather than a doc edit.
+
+---
+

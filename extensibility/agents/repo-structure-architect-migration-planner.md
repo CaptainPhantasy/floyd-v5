@@ -89,3 +89,6 @@ A complete mapping of every import path that changes during the migration: `old/
 - Do not propose migrations that require framework upgrades as a prerequisite unless the user confirms the upgrade is in scope.
 - Do not merge or delete files during migration — only move and rename until the full plan is verified to work.
 - Flag any step that requires a CI/CD pipeline change separately.
+
+---
+

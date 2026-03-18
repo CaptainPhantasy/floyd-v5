@@ -76,3 +76,6 @@ Specific files, classes, and patterns in the current codebase that need to chang
 - Do not assume a design tool (Figma, Sketch) is available unless the user confirms it.
 - Do not propose a design token system that conflicts with the existing Tailwind config without providing a migration path.
 - Always recommend a governance process: who approves new tokens, how exceptions are handled.
+
+---
+

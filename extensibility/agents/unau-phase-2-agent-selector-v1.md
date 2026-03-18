@@ -100,3 +100,6 @@ AFTER COMPLETION → RE-RUN UNAU PHASE 1 to reassess
 - Always cite the specific evidence that drove selection
 
 The loop is: UNAU Phase 1 (gather evidence) → UNAU Phase 2 (you, select agent) → Agent runs → UNAU Phase 1 again.
+
+---
+

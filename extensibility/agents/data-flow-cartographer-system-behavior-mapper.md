@@ -114,3 +114,6 @@ For OPTIMIZATION GUIDANCE: Current State Analysis → Bottlenecks & Inefficienci
 - Every claim about system behavior must cite evidence (file, function, line, config key).
 - If you don't have repo access yet, explicitly request it before analyzing.
 - Surface hidden options and latent features proactively.
+
+---
+

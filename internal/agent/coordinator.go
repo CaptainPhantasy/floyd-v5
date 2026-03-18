@@ -128,9 +128,9 @@ func (c *coordinator) Run(ctx context.Context, sessionID string, prompt string, 
 		return nil, fmt.Errorf("failed to update models: %w", err)
 	}
 
-	// v5.0.2: Dynamic Tool Discovery Registry Query
+	// v5.2.0: Dynamic Tool Discovery Registry Query
 	// Query the local MCP registry to map available sandboxed capabilities
-	slog.Info("v5.0.2: Performing dynamic tool discovery for sandboxed environment")
+	slog.Info("v5.2.0: Performing dynamic tool discovery for sandboxed environment")
 	mcpTools := tools.GetMCPTools(c.permissions, c.cfg.WorkingDir())
 	slog.Debug("Discovered sandboxed tools", "count", len(mcpTools))
 
@@ -460,7 +460,14 @@ func (c *coordinator) buildTools(ctx context.Context, agent config.Agent) ([]fan
 		tools.NewSourcegraphTool(nil),
 		tools.NewTodosTool(c.sessions),
 		tools.NewViewTool(c.lspClients, c.permissions, c.filetracker, c.cfg.WorkingDir(), c.cfg.Options.SkillsPaths...),
+		tools.NewWebSearchTool(nil),
 		tools.NewWriteTool(c.lspClients, c.permissions, c.history, c.filetracker, c.cfg.WorkingDir()),
+		tools.NewProjectMapTool(c.cfg.WorkingDir()),
+		tools.NewManageScratchpadTool(c.cfg.WorkingDir()),
+		tools.NewListSymbolsTool(c.cfg.WorkingDir()),
+		tools.NewApplyPatchTool(c.cfg.WorkingDir()),
+		tools.NewSmartReplaceTool(c.cfg.WorkingDir()),
+		tools.NewGetActiveDiffTool(c.cfg.WorkingDir()),
 	)
 
 	if c.lspClients.Len() > 0 {

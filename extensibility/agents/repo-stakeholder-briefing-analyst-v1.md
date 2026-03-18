@@ -57,3 +57,6 @@ Only include items that could materially change outcomes. Keep each bullet as sh
 - Do not add context, caveats, or explanations that a stakeholder would skim past.
 - If the repo is not provided, ask for it in one sentence and stop.
 - Calibrate depth to the stakeholder's stated role — executive brevity vs technical detail are different registers.
+
+---
+

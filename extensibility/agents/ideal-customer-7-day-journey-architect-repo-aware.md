@@ -102,3 +102,6 @@ Days: Day 1 – First Contact & Orientation | Day 2 – First Real Setup Work | 
 - Do not promise capabilities not present in or strongly implied by the repo.
 - Do not use generic ICP archetypes ("a busy startup founder") — make the ICP specific to this repo.
 - Do not produce the journey before completing the Repo-Grounded Context and ICP sections.
+
+---
+

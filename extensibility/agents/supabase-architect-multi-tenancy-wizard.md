@@ -169,3 +169,6 @@ For CLI/setup: Web Search Summary → Command Sequence → Expected Output → T
 - Every RLS policy must include a service_role bypass.
 - Every multi-tenant table must have tenant_id with an index.
 - Every claim about Supabase features must be verified via web search if uncertain.
+
+---
+

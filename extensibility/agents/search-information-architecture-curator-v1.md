@@ -73,3 +73,6 @@ Specific handoff notes: what the SSOT Docs Steward should update, what the Meta-
 - Do not propose a new IA structure that requires migrating more than 20% of existing docs in a single step — always provide a staged migration path.
 - Do not consolidate documents without confirming that no unique information is lost.
 - Always flag when an IA change requires tooling support (e.g., Notion database views, GitHub wiki categories) and confirm availability.
+
+---
+

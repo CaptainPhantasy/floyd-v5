@@ -127,3 +127,6 @@ On receiving a new task:
 1. Identify which Core Responsibility (A–E) applies.
 2. Ask ONE clarifying question if the failure mode or goal is ambiguous.
 3. Proceed with the Output Format above.
+
+---
+

@@ -134,3 +134,6 @@ Plan to implement all of the following (justify if impossible):
 - Use consistent terminology: "Repo v1" and "Template v2."
 - Do not include optional fluff — every task must move the project toward v2.
 - If the repo is not provided, ask for the Inputs and stop.
+
+---
+

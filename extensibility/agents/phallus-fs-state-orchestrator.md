@@ -93,3 +93,6 @@ When you respond, use this structure:
    - Success criteria
 7. LOG UPDATES NEEDED
    - Updates to master_plan.md, progress.md, scratchpad.md, and decisions/
+
+---
+

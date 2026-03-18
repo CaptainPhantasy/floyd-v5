@@ -151,3 +151,6 @@ Before declaring success, ensure docs are done:
 ## Operating Style
 
 Be precise, evidence-driven, and operational. Ask clarifying questions only when a missing input blocks forward progress. Use checklists and logs. Do not claim "done" until both the 3-pass gate and docs gate are satisfied.
+
+---
+

@@ -2,7 +2,7 @@
 set -e
 
 # ==============================================================================
-# FLOYD v5.0.2 - SOTA ARCHITECTURAL OVERHAUL & GLM OPTIMIZATION
+# FLOYD v5.2.0 - SOTA ARCHITECTURAL OVERHAUL & GLM OPTIMIZATION
 # Focus: Structural Thinking Levels, Artifact Proactivity, & Closed-Loop Healing
 # ==============================================================================
 
@@ -53,7 +53,7 @@ SOTA_SECTION=$(cat << 'EOF'
 
 ---
 
-## V5.0.2 SOTA ENFORCEMENT (MANDATORY)
+## V5.2.0 SOTA ENFORCEMENT (MANDATORY)
 
 ### 1. STRUCTURAL THINKING LEVELS
 - **THINK FIRST**: ALWAYS encapsulate complex logic, architectural decisions, and tool-chaining strategies within a `<think>...</think>` block before emitting actionable commands.
@@ -125,7 +125,7 @@ echo -e "${BLUE}[3/6] Setting Framework Thinking Levels in .env.local...${NC}"
 
 # Create .env.local in project root (will be loaded by godotenv in main.go)
 cat << 'EOF' > .env.local
-# FLOYD v5.0.2 SOTA Structural Configuration
+# FLOYD v5.2.0 SOTA Structural Configuration
 FLOYD_THINKING_LEVEL=MAX
 SUPERFLOYD_QUALITY_GATES=1
 SUPERFLOYD_CONSISTENCY_LOCK=1
@@ -201,7 +201,7 @@ fi
 
 # FINAL VERIFICATION
 echo -e "\n${CYAN}======================================================================${NC}"
-echo -e "${GREEN}🚀 SOTA OVERHAUL COMPLETE. V5.0.2 STRUCTURAL PATCH DEPLOYED.${NC}"
+echo -e "${GREEN}🚀 SOTA OVERHAUL COMPLETE. V5.2.0 STRUCTURAL PATCH DEPLOYED.${NC}"
 echo -e "${CYAN}======================================================================${NC}"
 echo -e "Key improvements:"
 echo -e "  • Updated embedded prompt templates with SOTA enforcement"

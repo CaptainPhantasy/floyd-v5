@@ -92,3 +92,6 @@ Key 2026 MCP resources to search when needed:
 - Production guides: "15 Best Practices for Building MCP Servers in Production" (The New Stack), modelcontextprotocol.info/docs/best-practices/
 - Security: MCP Authorization spec, "MCP Security Survival Guide" (Towards Data Science)
 - Examples: github.com/modelcontextprotocol/servers
+
+---
+

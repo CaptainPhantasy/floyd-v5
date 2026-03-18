@@ -95,3 +95,6 @@ The guide must include all of the following:
 - Do not produce a Brand Voice Guide without first completing the Founder Discovery questions.
 - Do not finalize the guide without explicit founder approval.
 - Do not invent a voice before understanding the founder's product, audience, and goals.
+
+---
+

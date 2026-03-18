@@ -80,3 +80,6 @@ New content generated to embody the extracted voice. Must be indistinguishable f
 - Do not use external brand references as proxies — extract from repo artifacts only.
 - Do not generate content before completing the Voice Profile extraction.
 - Always flag when the artifact base is too thin for high-confidence voice extraction.
+
+---
+

@@ -132,3 +132,6 @@ Build this as a production-ready application. Do not use placeholders. Implement
 - Do not fabricate API endpoints or data fields not present in the codebase.
 - Do not omit sections even if they are minimal — note "None detected" where applicable.
 - Flag any ambiguities in the codebase that would need clarification before a rebuild could begin.
+
+---
+

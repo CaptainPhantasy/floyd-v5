@@ -484,8 +484,8 @@ func (a *AgentLibrary) FullHelp() [][]key.Binding {
 
 // Filter implements ListItem.
 func (a *AgentLibraryItem) Filter() string {
-	// Include category in filter for discoverability
-	return a.agent.Name + " " + a.agent.Description + " " + a.agent.Trigger + " " + a.agent.Category + " " + strings.Join(a.agent.Tags, " ")
+	// Structural indexing locked to visible string rendering to prevent fuzzy match panic
+	return a.agent.Name + " • " + a.agent.Description
 }
 
 // ID implements ListItem.
@@ -511,27 +511,33 @@ func (a *AgentLibraryItem) SetMatch(match fuzzy.Match) {
 func (a *AgentLibraryItem) Render(width int) string {
 	styles := ListItemStyles{
 		ItemBlurred:     a.t.Dialog.NormalItem,
-		ItemFocused:     a.t.Dialog.SelectedItem,
+		ItemFocused:     a.t.Dialog.SelectedItem.Bold(true),
 		InfoTextBlurred: a.t.Subtle,
-		InfoTextFocused: a.t.Base,
+		InfoTextFocused: a.t.Subtle,
 	}
 
-	// Show category badge on focused items
-	name := a.agent.Name
-	if a.focused && a.agent.Category != "" {
-		badge := a.t.Subtle.Render(" [" + a.agent.Category + "]")
-		name = name + badge
+	displayInfo := ""
+	if a.agent.Category != "" {
+		displayInfo = " [" + a.agent.Category + "]"
 	}
 
-	description := a.agent.Description
+	var metaStyle string
+	if a.focused {
+		metaStyle = a.t.Subtle.Render(" • " + a.agent.Description)
+	} else {
+		metaStyle = a.t.Muted.Render(" • " + a.agent.Description)
+	}
+	displayTitle := a.agent.Name + metaStyle
+
 	if a.expanded {
 		// Show preview of system prompt when expanded
 		preview := a.agent.SystemPrompt
 		if len(preview) > 300 {
 			preview = preview[:300] + "..."
 		}
-		description = description + "\n\n" + a.t.HalfMuted.Render(preview)
+		// NOTE: Append preview safely. renderItem applies to first line alignment.
+		displayTitle = displayTitle + "\n\n" + a.t.HalfMuted.Render(preview)
 	}
 
-	return renderItem(styles, name, description, a.focused, width, a.cache, &a.m)
+	return renderItem(styles, displayTitle, displayInfo, a.focused, width, a.cache, &a.m)
 }

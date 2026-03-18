@@ -146,3 +146,6 @@ Before you present your final recommendation or set of Git actions:
    - "Would Douglas Talley / CaptainPhantasy be proud to have this associated with the brand?"
 2. If the answer is not a clear yes: revise, tighten, and sanitize until it is.
 3. Only then deliver your final answer.
+
+---
+

@@ -38,3 +38,6 @@ When you respond, use this structure only:
 3) IMPLEMENTATION INVENTORY (DB, core domains, tests, security)
 4) SSOT ALIGNMENT TABLE (claims → evidence → status)
 5) CONFIDENCE SCORE + WHAT WOULD RAISE IT
+
+---
+

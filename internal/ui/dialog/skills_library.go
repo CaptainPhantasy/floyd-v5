@@ -455,11 +455,7 @@ func (s *SkillsLibrary) FullHelp() [][]key.Binding {
 
 // Filter implements ListItem.
 func (s *SkillsLibraryItem) Filter() string {
-	cat := s.skill.Category
-	if cat == "" {
-		cat = "general"
-	}
-	return s.skill.Name + " " + s.skill.Description + " " + cat
+	return s.skill.Name + " • " + s.skill.Description
 }
 
 // ID implements ListItem.
@@ -485,19 +481,25 @@ func (s *SkillsLibraryItem) SetMatch(match fuzzy.Match) {
 func (s *SkillsLibraryItem) Render(width int) string {
 	styles := ListItemStyles{
 		ItemBlurred:     s.t.Dialog.NormalItem,
-		ItemFocused:     s.t.Dialog.SelectedItem,
+		ItemFocused:     s.t.Dialog.SelectedItem.Bold(true),
 		InfoTextBlurred: s.t.Subtle,
-		InfoTextFocused: s.t.Base,
+		InfoTextFocused: s.t.Subtle,
 	}
 
-	// Show category badge on focused items
-	name := s.skill.Name
-	if s.focused && s.skill.Category != "" {
-		badge := s.t.Subtle.Render(" [" + s.skill.Category + "]")
-		name = name + badge
+	displayInfo := ""
+	if s.skill.Category != "" {
+		displayInfo = " [" + s.skill.Category + "]"
 	}
 
-	description := s.skill.Description
+	var metaStyle string
+	if s.focused {
+		// Use faint base text for description so it blends with selection
+		metaStyle = s.t.Subtle.Render(" • " + s.skill.Description)
+	} else {
+		metaStyle = s.t.Muted.Render(" • " + s.skill.Description)
+	}
+	displayTitle := s.skill.Name + metaStyle
+
 	if s.expanded {
 		// Show preview of skill instructions when expanded
 		preview := s.skill.Instructions
@@ -506,13 +508,11 @@ func (s *SkillsLibraryItem) Render(width int) string {
 		}
 		
 		if s.focused {
-			description = description + "\n\n" + s.t.Base.Render(preview)
+			displayTitle = displayTitle + "\n\n" + s.t.Base.Render(preview)
 		} else {
-			description = description + "\n\n" + s.t.HalfMuted.Render(preview)
+			displayTitle = displayTitle + "\n\n" + s.t.HalfMuted.Render(preview)
 		}
-	} else if s.focused {
-		description = s.t.Dialog.TitleText.Render(description)
 	}
 
-	return renderItem(styles, name, description, s.focused, width, s.cache, &s.m)
+	return renderItem(styles, displayTitle, displayInfo, s.focused, width, s.cache, &s.m)
 }

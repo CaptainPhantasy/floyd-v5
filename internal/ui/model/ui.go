@@ -851,6 +851,36 @@ func (m *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
+// applyAutoStabilizeIfNeeded invokes the native diagnostic bus without needing the cmd package.
+func (m *UI) applyAutoStabilizeIfNeeded(ctx context.Context, cfg *config.Config, prompt string) string {
+	// Detect if running in SuperFloyd mode.
+	isSuperFloyd := false
+	if cfg != nil && cfg.Options != nil {
+		if strings.Contains(strings.ToLower(cfg.Options.RuntimeProfile), "superfloyd") ||
+			strings.Contains(strings.ToLower(os.Getenv("FLOYD_RUNTIME_PROFILE")), "superfloyd") {
+			isSuperFloyd = true
+		}
+	}
+	
+	if !isSuperFloyd {
+		return prompt
+	}
+
+	trimmed := strings.TrimSpace(prompt)
+	if len(trimmed) == 0 {
+		return prompt
+	}
+
+	// 1. Check for prompt size degradation
+	maxRunes := 12000
+	runes := []rune(trimmed)
+	if len(runes) > maxRunes {
+		return string(runes[:maxRunes]) + "\n\n[superfloyd-auto-stabilize] Prompt was truncated to maintain reliability under high-load context conditions."
+	}
+	// Return the original prompt as-is for now if no hard threshold is breached.
+	return prompt
+}
+
 // setSessionMessages sets the messages for the current session in the chat
 func (m *UI) setSessionMessages(msgs []message.Message) tea.Cmd {
 	var cmds []tea.Cmd
@@ -2967,6 +2997,19 @@ func (m *UI) sendMessage(content string, attachments ...message.Attachment) tea.
 
 	// Capture session ID to avoid race with main goroutine updating m.session.
 	sessionID := m.session.ID
+
+	// SOTA Auto-Stabilize Diagnostic Bus
+	// Wire the applyAutoStabilizeIfNeeded threshold check natively into the UI Event Bus
+	// to intercept prompt degradations before they hit the agent.
+	if m.com.Config() != nil {
+		originalMsg := content
+		content = m.applyAutoStabilizeIfNeeded(context.Background(), m.com.Config(), content)
+		if content != originalMsg {
+			// Trigger UI pill explicitly
+			cmds = append(cmds, util.ReportWarn("Prompt adjusted by Auto-Stabilize Diagnostic Bus for reliability."))
+		}
+	}
+
 	cmds = append(cmds, func() tea.Msg {
 		ctx := context.Background()
 		_, err := m.com.App.AgentCoordinator.Run(ctx, sessionID, content, attachments...)
@@ -3077,6 +3120,10 @@ func (m *UI) openDialog(id string) tea.Cmd {
 		}
 	case dialog.SkillsLibraryID:
 		if cmd := m.openSkillsLibrary(); cmd != nil {
+			cmds = append(cmds, cmd)
+		}
+	case dialog.PluginsLibraryID:
+		if cmd := m.openPluginsLibrary(); cmd != nil {
 			cmds = append(cmds, cmd)
 		}
 	default:
@@ -3349,6 +3396,23 @@ func (m *UI) openSkillsLibrary() tea.Cmd {
 	}
 
 	m.dialog.OpenDialog(skillsLibrary)
+	return nil
+}
+
+// openPluginsLibrary opens the plugins library dialog.
+func (m *UI) openPluginsLibrary() tea.Cmd {
+	if m.dialog.ContainsDialog(dialog.PluginsLibraryID) {
+		// Bring to front if already open
+		m.dialog.BringToFront(dialog.PluginsLibraryID)
+		return nil
+	}
+
+	pluginsLibrary, err := dialog.NewPluginsLibrary(m.com)
+	if err != nil {
+		return util.ReportError(err)
+	}
+
+	m.dialog.OpenDialog(pluginsLibrary)
 	return nil
 }
 

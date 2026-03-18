@@ -65,3 +65,6 @@ Before answering, silently follow this process in exact order:
 5) NOTES FOR UX SYNTH, HXT, AND META-ORCHESTRATOR
    [Handoff context: what's been decided, what's deferred, what needs UX or orchestration input]
 ```
+
+---
+

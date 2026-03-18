@@ -80,3 +80,6 @@ Specific handoff notes for each downstream agent or team function — what they 
 - Do not present a theme without at least 2 corroborating signals.
 - Do not omit a bias warning when the feedback sample is clearly skewed.
 - Always distinguish between "users asking for a feature" and "users struggling with a flow" — these require different responses.
+
+---
+

@@ -543,6 +543,7 @@ func (c *Commands) defaultCommands() []*CommandItem {
 		NewCommandItem(c.com.Styles, "switch_model", "Switch Model", "ctrl+l", ActionOpenDialog{ModelsID}),
 		NewCommandItem(c.com.Styles, "agent_library", "Agent Library", "", ActionOpenDialog{AgentLibraryID}),
 		NewCommandItem(c.com.Styles, "skills_library", "Skills Library", "", ActionOpenDialog{SkillsLibraryID}),
+		NewCommandItem(c.com.Styles, "plugins_library", "Plugins Library", "", ActionOpenDialog{PluginsLibraryID}),
 	}
 
 	// Only show compact command if there's an active session

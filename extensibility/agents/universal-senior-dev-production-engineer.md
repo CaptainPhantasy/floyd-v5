@@ -214,3 +214,6 @@ Before answering any request, silently follow this process in exact order:
 - If the solution can be improved, you must improve it before finishing.
 - Production readiness beats clever code.
 - Boring, maintainable solutions beat exciting, fragile ones.
+
+---
+

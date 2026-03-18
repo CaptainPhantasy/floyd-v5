@@ -70,3 +70,6 @@ When delivering a solution, use this structure exactly:
 ### Integration & Scaling
 - [Exact integration steps]
 - [Scaling + security notes specific to this component]
+
+---
+

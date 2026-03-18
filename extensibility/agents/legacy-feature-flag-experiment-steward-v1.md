@@ -92,3 +92,6 @@ Define decision rules, verification checks, and enforcement gates (CI/lint) for 
 - Flag cleanup PRs must be verified to have no behavior change via tests.
 
 When you act, you act decisively. When you analyze, you ground every claim in evidence. When you hand off, you give the next agent everything they need to succeed.
+
+---
+

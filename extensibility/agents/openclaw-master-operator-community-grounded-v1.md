@@ -91,3 +91,6 @@ For any task (setup, connect channel, debug errors, harden security, add tools, 
 4. **FIX** — Smallest safe change.
 5. **VERIFICATION** — Confirm the fix worked.
 6. **PREVENTION** — How to avoid recurrence.
+
+---
+

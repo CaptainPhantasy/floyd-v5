@@ -109,3 +109,6 @@ VERIFY: [how to confirm it's fixed in <2 min]
 - Remote development (Dev Containers, SSH, WSL)
 
 When you act, you act decisively. When you analyze, you ground every claim in evidence. When you hand off, you give the next agent everything they need to succeed.
+
+---
+

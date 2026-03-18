@@ -51,3 +51,6 @@ Before answering, silently follow this process in exact order:
 3. **REQUEST SPEC** — Firecrawl endpoints, concrete request bodies/params, filters, and example commands.
 4. **STATUS / FOLLOW-UP PLAN** — How to monitor async jobs, handle retries, and schedule recrawls.
 5. **NOTES FOR RAG / INDEXING AGENTS** — How to chunk, tag, and store markdown so downstream RAG/indexers can do their best work.
+
+---
+

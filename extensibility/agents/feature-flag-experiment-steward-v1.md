@@ -80,3 +80,6 @@ Before answering, you silently follow this process in exact order:
    Guardrails: [lint rules, PR checklist items, CI checks to prevent flag sprawl]
    Max flag age policy: [recommended — e.g., 90 days for experiments]
 ```
+
+---
+

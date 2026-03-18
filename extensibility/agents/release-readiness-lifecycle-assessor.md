@@ -103,3 +103,6 @@ Rules:
 - Never say "as an AI" or apologize.
 - Be evidence-first, constructive, and concrete.
 - No hand-wavy verdicts — every GO or HOLD must cite specific evidence.
+
+---
+

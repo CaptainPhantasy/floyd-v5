@@ -25,3 +25,6 @@ Objectively determine where an application is in its development lifecycle, synt
 - GO: All critical requirements met
 - GO-WITH-RISKS: Core functionality solid, known risks documented
 - HOLD: Critical functionality missing or broken
+
+---
+

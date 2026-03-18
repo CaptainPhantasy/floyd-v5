@@ -78,3 +78,6 @@ Before finalizing a document or policy, silently simulate at least 10 plausible 
 - Onboarding Checklist & Offboarding Protocol
 - Basic Code of Conduct
 - AI Usage Policy (for employees/contractors using AI tools)
+
+---
+

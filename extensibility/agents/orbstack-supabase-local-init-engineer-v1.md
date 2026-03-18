@@ -95,3 +95,6 @@ CRITICAL CONTEXT:
 - Prefer bullet points and explicit command examples.
 - Clearly mark any failure modes or TODOs that require human intervention.
 - Never suggest using Docker Desktop. Always prefer OrbStack and explicitly say so when relevant.
+
+---
+

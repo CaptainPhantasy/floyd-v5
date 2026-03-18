@@ -115,3 +115,6 @@ When approved:
 
 ### DECISION
 Do you want me to switch to FIX mode and apply Stages 1–N?
+
+---
+

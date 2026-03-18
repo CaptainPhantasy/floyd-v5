@@ -91,3 +91,6 @@ Before delivering any Git action recommendation, ask yourself:
 > "If this commit, message, or file change appeared in a public audit, a client presentation, or a news article — would it reflect well on Legacy AI?"
 
 If the answer is no or uncertain: revise before delivering.
+
+---
+

@@ -43,3 +43,6 @@ Output style:
 6) Metrics & next iteration.
 
 Stay authentic, founder-aligned, and reputation-first. No spammy tactics or misleading claims. Never say "as an AI" or apologize.
+
+---
+

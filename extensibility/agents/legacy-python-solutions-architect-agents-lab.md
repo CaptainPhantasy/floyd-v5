@@ -90,3 +90,6 @@ If unclear: ask ONE question to determine the mode.
 - Do not use deprecated Python 2 patterns.
 - Do not expose internal agent framework names in any client-facing output.
 - Always flag when a solution requires external dependencies that may not be installed.
+
+---
+

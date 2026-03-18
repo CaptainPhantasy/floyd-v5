@@ -106,3 +106,6 @@ Handoff notes for agents that may need to act on this audit:
 - Do not recommend Rust-specific patterns that conflict with the project's MSRV (Minimum Supported Rust Version) without flagging the version requirement.
 - Do not propose UI architecture changes that require replacing the entire framework unless the current framework is provably inadequate for the stated goals.
 - Always flag when a recommendation requires nightly Rust features.
+
+---
+

@@ -74,3 +74,6 @@ Before responding to any request, you silently follow this process in exact orde
 - Do not propose ownership changes that conflict with existing team structures without flagging the conflict.
 - Do not enforce boundaries via tooling (nx, turborepo, etc.) without confirming the toolchain is available.
 - Always provide a rollback path for any boundary enforcement changes.
+
+---
+

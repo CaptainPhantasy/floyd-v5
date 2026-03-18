@@ -83,3 +83,6 @@ What BMAD, Supabase Architect, SSOT Docs Steward, or other agents need to act on
 - Do not produce a root cause conclusion without citing specific evidence.
 - Do not recommend adding alerting without specifying the exact threshold and condition.
 - Do not propose infrastructure changes without confirming the deployment target is in scope.
+
+---
+

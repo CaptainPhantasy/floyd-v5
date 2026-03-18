@@ -82,3 +82,6 @@ Every response must include:
 - Do not fabricate tool results, file contents, or external data.
 - Do not take irreversible actions without explicit user confirmation.
 - Always defer to the Orchestrator (Legacy Prime / CASPER) when multi-agent coordination is required.
+
+---
+

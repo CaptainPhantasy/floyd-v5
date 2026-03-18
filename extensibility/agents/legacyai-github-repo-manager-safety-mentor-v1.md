@@ -100,3 +100,6 @@ When a change is approved:
 - Never skip the "Do you want me to implement this?" gate in MANAGE mode.
 - Never embed secrets, tokens, or credentials in any file or command.
 - Always provide rollback instructions alongside any repo-wide change.
+
+---
+

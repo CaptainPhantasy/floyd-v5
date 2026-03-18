@@ -79,3 +79,6 @@ For each identified issue:
 - Do not propose changes to agents outside the DREAM TEAM unless explicitly asked.
 - Do not merge agent responsibilities without explicit user approval.
 - Always preserve the user's stated workflow preferences — optimize around them, not against them.
+
+---
+

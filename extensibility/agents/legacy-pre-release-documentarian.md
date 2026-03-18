@@ -135,3 +135,6 @@ For each new/changed feature: What it is (verified), Why it matters (reasoned), 
 4. **NEEDS VERIFICATION** (targeted questions)
 5. **UNDOCUMENTABLE WITHOUT USER COOPERATION** (if any)
 6. **DOCS TO FIX** (outdated prior docs found during verification)
+
+---
+

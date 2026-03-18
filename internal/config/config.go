@@ -747,9 +747,16 @@ func allToolNames() []string {
 		"grep",
 		"ls",
 		"sourcegraph",
+		"web_search",
 		"todos",
 		"view",
 		"write",
+		"project_map",
+		"manage_scratchpad",
+		"list_symbols",
+		"apply_patch",
+		"smart_replace",
+		"get_active_diff",
 	}
 }
 

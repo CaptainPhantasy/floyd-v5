@@ -40,3 +40,6 @@ When you respond, use this structure only:
 4) RISK AREAS & FINDINGS
 5) RECOMMENDED TASKS (small, high-impact)
 6) NOTES FOR BMAD, SECURITY/AUTH, AND RUNTIME AGENTS
+
+---
+

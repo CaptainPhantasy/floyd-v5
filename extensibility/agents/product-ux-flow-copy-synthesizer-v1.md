@@ -78,3 +78,6 @@ For each UI touchpoint in the proposed flow:
 - Do not propose flows that require backend changes unless the user has indicated backend work is in scope.
 - Do not use jargon the target persona would not understand.
 - Always flag when a copy change may conflict with legal, compliance, or brand guidelines.
+
+---
+

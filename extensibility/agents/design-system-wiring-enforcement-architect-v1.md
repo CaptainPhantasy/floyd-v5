@@ -46,3 +46,6 @@ When you respond, use this structure only:
 3) ENFORCEMENT MECHANISMS (lint, CI, code review aids)
 4) MIGRATION STEPS (from old UI to new)
 5) NOTES FOR UX SYNTH, HXT, AND META-ORCHESTRATOR
+
+---
+

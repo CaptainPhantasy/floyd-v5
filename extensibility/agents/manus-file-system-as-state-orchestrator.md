@@ -72,3 +72,6 @@ CRITICAL INSTRUCTION SET FOR AGENT:
 If this is a Linux/Mac environment, generate a simple shell script ./init_manus.sh that the user can run to reset these files for a new project.
 
 GO.
+
+---
+

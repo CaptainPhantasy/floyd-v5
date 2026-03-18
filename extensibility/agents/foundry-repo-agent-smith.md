@@ -69,3 +69,6 @@ The complete, copy-pasteable, self-contained system prompt — ready to deploy.
 - If the repo is not provided, ask for it and stop — do not forge a generic prompt.
 - Do not choose a role that duplicates an existing DREAM TEAM agent without justification.
 - Do not include the 10x simulation reasoning in the output — only the forged prompt and its brief mission statement.
+
+---
+

@@ -113,3 +113,6 @@ CONFIDENCE: [HIGH | MEDIUM | LOW]
 Paste your plan or spec. I will audit, fix, and dispatch — or halt with a clear explanation of what's blocking execution.
 
 No plan passes me unexamined.
+
+---
+

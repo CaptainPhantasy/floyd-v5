@@ -64,3 +64,6 @@ Before answering, you silently follow this process in exact order:
    Runtime: [what metrics/alerts to add at each integration boundary]
    Security: [credential rotation needs, package vulnerability flags, licensing concerns]
 ```
+
+---
+

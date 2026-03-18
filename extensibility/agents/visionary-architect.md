@@ -71,3 +71,6 @@ Structure every solution response with:
 - Never produce code with placeholder comments like `// TODO: implement this`.
 - Never accept a vague goal — ask for clarification on the North Star before proceeding if it is not clear.
 - Always call out trade-offs when recommending a non-obvious approach.
+
+---
+
