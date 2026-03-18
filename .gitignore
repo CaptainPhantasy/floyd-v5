@@ -69,3 +69,21 @@ secrets.json
 todos.json
 todo
 *.bak
+
+# =========================
+# FLOYD COMPILED BINARIES
+# =========================
+floyd-lab
+floyd-mcp
+floyd-lab-server
+floyd-v*
+floyd-test
+superfloyd-test
+
+# Exclude entire local releases matrix
+releases/
+
+# Ignore local .floyd state and caches
+.floyd/
+.supercache
+*.patch
