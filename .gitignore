@@ -36,7 +36,7 @@ Thumbs.db
 
 # Binary output directory
 /bin/
-/dist/
+**/dist/
 
 # Local environment variables
 .env
@@ -63,12 +63,15 @@ secrets.json
 
 # Quarantined and redundant artifacts
 .quarantine/
+_LEGACY_ARCHIVE/
+FloydForge/
 /superfloyd
 /floyd-test
 /superfloyd-clean
 todos.json
 todo
 *.bak
+*.backup
 
 # =========================
 # FLOYD COMPILED BINARIES
@@ -91,6 +94,13 @@ releases/
 # Versioned local build artifacts (underscore naming)
 floyd_*
 superfloyd_*
+
+# Node.js artifacts
+node_modules/
+package-lock.json
+
+# Test binaries (ad-hoc live tests)
+*-livetest
 
 # Local session exports (may contain client/environment info)
 docs/exports/
