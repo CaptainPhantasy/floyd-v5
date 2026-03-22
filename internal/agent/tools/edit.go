@@ -103,6 +103,7 @@ func NewEditTool(
 
 			text := fmt.Sprintf("<result>\n%s\n</result>\n", response.Content)
 			text += getDiagnostics(params.FilePath, lspClients)
+			text += goFilesBuildCheck(params.FilePath, workingDir)
 			response.Content = text
 			return response, nil
 		})

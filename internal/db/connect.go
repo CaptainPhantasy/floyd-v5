@@ -69,6 +69,7 @@ func ensureColumns(ctx context.Context, db *sql.DB) error {
 		{"sessions", "message_count", "ALTER TABLE sessions ADD COLUMN message_count INTEGER NOT NULL DEFAULT 0"},
 		{"sessions", "prompt_tokens", "ALTER TABLE sessions ADD COLUMN prompt_tokens INTEGER NOT NULL DEFAULT 0"},
 		{"sessions", "completion_tokens", "ALTER TABLE sessions ADD COLUMN completion_tokens INTEGER NOT NULL DEFAULT 0"},
+		{"sessions", "cache_read_tokens", "ALTER TABLE sessions ADD COLUMN cache_read_tokens INTEGER NOT NULL DEFAULT 0"},
 		{"sessions", "cost", "ALTER TABLE sessions ADD COLUMN cost REAL NOT NULL DEFAULT 0.0"},
 	}
 
@@ -118,6 +119,15 @@ func ensureColumns(ctx context.Context, db *sql.DB) error {
 		rows, _ := result.RowsAffected()
 		if rows > 0 {
 			slog.Info("Migrated sessions from name to title", "count", rows)
+		}
+
+		// Drop the old 'name' column — it has NOT NULL without DEFAULT,
+		// which causes INSERT failures since new code only writes 'title'.
+		// Requires SQLite 3.35+.
+		if _, err := db.ExecContext(ctx, "ALTER TABLE sessions DROP COLUMN name"); err != nil {
+			slog.Warn("Could not drop legacy name column (non-fatal)", "error", err)
+		} else {
+			slog.Info("Dropped legacy sessions.name column")
 		}
 	}
 

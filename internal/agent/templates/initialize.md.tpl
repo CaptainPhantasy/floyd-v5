@@ -196,8 +196,9 @@ Continuous checkpointing triggers:
 - after mode shifts
 
 Checkpoint pattern:
-```python
-cache_store(key="{project}:{entity}", value={state_data})
+Write findings to the local project identity file:
+```
+Read .floyd/.supercache → update relevant fields → write back
 ```
 
 ---

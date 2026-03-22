@@ -87,3 +87,10 @@ releases/
 .floyd/
 .supercache
 *.patch
+
+# Versioned local build artifacts (underscore naming)
+floyd_*
+superfloyd_*
+
+# Local session exports (may contain client/environment info)
+docs/exports/

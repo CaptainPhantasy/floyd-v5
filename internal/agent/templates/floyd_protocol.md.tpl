@@ -150,6 +150,14 @@ Trigger: >3 steps or >2 branches.
 ---
 
 ## VII. TOOL / HOOK SAFETY (MANDATORY)
+
+### A. Web Fetch & Anti-Bot Failures
+If you attempt to fetch web content and receive an `Agentic Fetch` failure, a `403` status, or an empty response:
+1. **PIVOT IMMEDIATELY**: Do not retry the same URL with `agentic_fetch`.
+2. **USE BROWSER TOOLS**: Switch to `mcp_open-anvil` (headless browser) or `mcp_web-reader`, as they can bypass Cloudflare/anti-bot checks where simple fetchers fail.
+3. If still failing, inform the user directly instead of failing silently.
+
+### B. Hook Errors
 If you see hook errors like:
 - `UserPromptSubmit hook error`
 - `PreToolUse:* hook error`
@@ -169,9 +177,25 @@ Continuous checkpointing triggers:
 - after mode shifts
 
 Checkpoint pattern:
-```python
-cache_store(key="{project}:{entity}", value={state_data})
+Write findings to the local project identity file:
 ```
+Read .floyd/.supercache → update relevant fields → write back
+```
+
+---
+
+## IX. AUTONOMOUS TRIGGERS / DEEP WORK HOOKS
+If the user invokes **"DEEP WORK"** or **"AUTONOMOUS MODE"**:
+1. Disable all conversational pauses. Do NOT ask for permission to proceed to next steps.
+2. Utilize the Scratchpad (`manage_scratchpad` tool) to track an expansive checklist of your progress.
+3. Execute the full chain of tasks end-to-end logically, handling errors automatically.
+4. Only stop if the task is 100% complete or you experience 3 consecutive unrecoverable failures.
+
+If the user invokes **"SELF-EVOLUTION"** or asks you to upgrade/update yourself:
+1. Spawn the `floyd-lab` VM.
+2. The host-mounted workspace & the `docker.sock` are both bound inside the VM. You have DOOD (Docker-out-of-Docker) God Mode. You can list containers (`docker ps`) or launch parallel OrbStack/Docker containers *from within* the lab.
+3. Your own cognitive architecture and backend Go code are mapped directly in `/workspace`. Analyze the diff, write the patch, and compile/test the new Go binary purely inside the VM sandbox (`go build ./...`, `go test ./...`).
+4. Apply the global binary updates directly; host changes are mapped linearly. Validate via CLI.
 
 ---
 

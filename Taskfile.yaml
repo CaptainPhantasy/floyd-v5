@@ -60,6 +60,31 @@ tasks:
     cmds:
       - go test -race -failfast ./... {{.CLI_ARGS}}
 
+  qa:personal:
+    desc: Strict local quality gate for personal environment (no GitHub dependency, delta-focused)
+    cmds:
+      - |
+        CHANGED_GO="$(git status --porcelain | awk '{print $2}' | grep '\.go$' || true)"
+        if [ -n "$CHANGED_GO" ]; then
+          BAD_FMT="$(echo "$CHANGED_GO" | xargs gofumpt -l)"
+          test -z "$BAD_FMT"
+        fi
+      - |
+        CHANGED_GO="$(git status --porcelain | awk '{print $2}' | grep '\.go$' || true)"
+        if [ -n "$CHANGED_GO" ]; then
+          CHANGED_DIRS="$(echo "$CHANGED_GO" | xargs -n1 dirname | sort -u)"
+          for d in $CHANGED_DIRS; do
+            golangci-lint run --path-mode=abs --config=".golangci.yml" --timeout=5m "./$d/..."
+          done
+        fi
+      - go test ./internal/config ./internal/cmd ./internal/ui/... ./internal/shell ./internal/projects
+      - go vet ./...
+      - go test -race ./internal/config ./internal/cmd ./internal/ui/... ./internal/shell ./internal/projects
+      - go build -ldflags="-X github.com/legacy-ai/floyd/internal/version.Version=v5.6-personal" -o floyd_56 .
+      - cp floyd_56 superfloyd_56
+      - ./floyd_56 --version
+      - ./superfloyd_56 --version
+
   test:record:
     desc: Run tests and record all VCR cassettes again
     aliases: [record]

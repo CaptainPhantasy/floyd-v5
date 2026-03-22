@@ -168,6 +168,9 @@ func (e *Environment) Execute(ctx context.Context, command string, options Optio
 	if shell == "" {
 		shell = defaultShell()
 	}
+	if err := validateShell(shell); err != nil {
+		return Result{}, err
+	}
 	maxBuffer := options.MaxBufferSize
 	if maxBuffer == 0 {
 		maxBuffer = e.config.MaxBufferSize
@@ -239,6 +242,9 @@ func (e *Environment) ExecuteBackground(ctx context.Context, command string, opt
 	}
 	if shell == "" {
 		shell = defaultShell()
+	}
+	if err := validateShell(shell); err != nil {
+		return nil, err
 	}
 
 	cmd := exec.CommandContext(ctx, shell, "-c", command) // #nosec G204
@@ -552,6 +558,28 @@ func defaultShell() string {
 		return shell
 	}
 	return "bash"
+}
+
+// validateShell checks if the shell binary exists and is executable
+func validateShell(shell string) error {
+	// On Windows, "cmd" is always available
+	if runtime.GOOS == "windows" && shell == "cmd" {
+		return nil
+	}
+	_, err := exec.LookPath(shell)
+	if err != nil {
+		return ferrors.CreateUserError(
+			fmt.Sprintf("Shell '%s' not found in PATH", shell),
+			ferrors.UserErrorOptions{
+				Category: ferrors.ErrorCategoryCommandExecution,
+				Resolution: []string{
+					"Ensure the shell is installed and in your PATH.",
+					"Set a valid shell via the SHELL environment variable.",
+				},
+			},
+		)
+	}
+	return nil
 }
 
 func exitCodeFromError(err error) int {

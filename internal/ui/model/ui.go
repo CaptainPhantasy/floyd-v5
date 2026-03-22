@@ -754,8 +754,8 @@ func (m *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			term := m.terms[m.termIndex]
 			if key.Matches(msg, m.keyMap.Quit) && !m.dialog.ContainsDialog(dialog.QuitID) {
 				if cmd := m.openQuitDialog(); cmd != nil {
-						cmds = append(cmds, cmd)
-					}
+					cmds = append(cmds, cmd)
+				}
 				return m, tea.Batch(cmds...)
 			}
 			// Esc or Ctrl+T exits terminal focus.
@@ -861,7 +861,7 @@ func (m *UI) applyAutoStabilizeIfNeeded(ctx context.Context, cfg *config.Config,
 			isSuperFloyd = true
 		}
 	}
-	
+
 	if !isSuperFloyd {
 		return prompt
 	}
@@ -1385,7 +1385,7 @@ func (m *UI) handleDialogMsg(msg tea.Msg) tea.Cmd {
 			if err := cfg.UpdatePreferredModel(agentCfg.Model, currentModel); err != nil {
 				return util.ReportError(err)()
 			}
-			m.com.App.UpdateAgentModel(context.TODO())
+			m.com.App.UpdateAgentModel(context.Background())
 			status := "disabled"
 			if currentModel.Think {
 				status = "enabled"
@@ -1445,7 +1445,7 @@ func (m *UI) handleDialogMsg(msg tea.Msg) tea.Cmd {
 		}
 
 		cmds = append(cmds, func() tea.Msg {
-			if err := m.com.App.UpdateAgentModel(context.TODO()); err != nil {
+			if err := m.com.App.UpdateAgentModel(context.Background()); err != nil {
 				return util.ReportError(err)
 			}
 
@@ -1461,7 +1461,7 @@ func (m *UI) handleDialogMsg(msg tea.Msg) tea.Cmd {
 		if isOnboarding {
 			m.setState(uiLanding, uiFocusEditor)
 			m.com.Config().SetupAgents()
-			if err := m.com.App.InitCoderAgent(context.TODO()); err != nil {
+			if err := m.com.App.InitCoderAgent(context.Background()); err != nil {
 				cmds = append(cmds, util.ReportError(err))
 			}
 		}
@@ -1491,7 +1491,7 @@ func (m *UI) handleDialogMsg(msg tea.Msg) tea.Cmd {
 		}
 
 		cmds = append(cmds, func() tea.Msg {
-			m.com.App.UpdateAgentModel(context.TODO())
+			m.com.App.UpdateAgentModel(context.Background())
 			return util.NewInfoMsg("Reasoning effort set to " + msg.Effort)
 		})
 		m.dialog.CloseDialog(dialog.ReasoningID)
@@ -1807,7 +1807,28 @@ func (m *UI) handleKeyPressMsg(msg tea.KeyPressMsg) tea.Cmd {
 					cmds = append(cmds, cmd)
 				}
 			case key.Matches(msg, m.keyMap.Editor.AcceptSuggestion):
-				m.acceptCommandSuggestion()
+				if m.acceptCommandSuggestion() {
+					break
+				}
+
+				curValue := m.textarea.Value()
+				if m.detailsOpen {
+					m.detailsOpen = false
+					m.updateLayoutAndSize()
+				}
+
+				ta, cmd := m.textarea.Update(msg)
+				m.textarea = ta
+				cmds = append(cmds, cmd)
+
+				m.updateHistoryDraft(curValue)
+				m.updateCommandSuggestion()
+			case key.Matches(msg, m.keyMap.Editor.RequestSuggestion):
+				if m.isAgentBusy() {
+					cmds = append(cmds, util.ReportWarn("Agent is busy, please wait..."))
+					break
+				}
+				cmds = append(cmds, m.requestSuggestion(m.textarea.Value()))
 			case key.Matches(msg, m.keyMap.Editor.Escape):
 				cmd := m.handleHistoryEscape(msg)
 				if cmd != nil {
@@ -2194,6 +2215,7 @@ func (m *UI) ShortHelp() []key.Binding {
 		case uiFocusEditor:
 			binds = append(binds,
 				k.Editor.Newline,
+				k.Editor.RequestSuggestion,
 			)
 		case uiFocusMain:
 			binds = append(binds,
@@ -2282,6 +2304,7 @@ func (m *UI) FullHelp() [][]key.Binding {
 			binds = append(binds,
 				[]key.Binding{
 					k.Editor.Newline,
+					k.Editor.RequestSuggestion,
 					k.Editor.AddImage,
 					k.Editor.MentionFile,
 					k.Editor.OpenEditor,
@@ -2330,6 +2353,7 @@ func (m *UI) FullHelp() [][]key.Binding {
 				},
 				[]key.Binding{
 					k.Editor.Newline,
+					k.Editor.RequestSuggestion,
 					k.Editor.AddImage,
 					k.Editor.MentionFile,
 					k.Editor.OpenEditor,
@@ -2770,9 +2794,9 @@ func (m *UI) insertFileCompletion(path string) tea.Cmd {
 			return nil
 		}
 
-		m.sessionFileReads = append(m.sessionFileReads, absPath)
-
-		// Add file as attachment.
+		if m.focus != uiFocusEditor || !m.textarea.Focused() {
+			return nil // Skip update, preserve suggestion
+		}
 		content, err := os.ReadFile(path)
 		if err != nil {
 			// If it fails, let the LLM handle it later.
@@ -2870,14 +2894,22 @@ func (m *UI) updateCommandSuggestion() {
 		return
 	}
 
-	// AI suggestion takes priority when editor is empty
-	if value == "" && m.aiSuggestion != "" {
-		m.commandSuggestion = m.aiSuggestion
-		return
-	}
+	// AI suggestion takes priority while the current editor value still matches
+	// its prefix. This keeps the ghost text alive for both manual typing and
+	// speech-to-text/dictation as long as the user is continuing along the same
+	// suggestion.
+	if m.aiSuggestion != "" {
+		if value == "" {
+			m.commandSuggestion = m.aiSuggestion
+			return
+		}
+		if strings.HasPrefix(strings.ToLower(m.aiSuggestion), strings.ToLower(value)) && !strings.EqualFold(m.aiSuggestion, value) {
+			m.commandSuggestion = m.aiSuggestion
+			return
+		}
 
-	// Clear AI suggestion once user starts typing
-	if value != "" {
+		// Once the user diverges from the AI suggestion, discard it and fall back
+		// to history-based suggestions.
 		m.aiSuggestion = ""
 	}
 
@@ -3037,6 +3069,32 @@ func (m *UI) sendMessage(content string, attachments ...message.Attachment) tea.
 		return nil
 	})
 	return tea.Batch(cmds...)
+}
+
+func (m *UI) requestSuggestion(prompt string) tea.Cmd {
+	if m.com.App.AgentCoordinator == nil {
+		return util.ReportError(fmt.Errorf("coder agent is not initialized"))
+	}
+
+	sessionID := ""
+	if m.hasSession() {
+		sessionID = m.session.ID
+	}
+
+	return func() tea.Msg {
+		ctx := context.Background()
+		suggestion, err := m.com.App.AgentCoordinator.SuggestPrompt(ctx, sessionID, prompt)
+		if err != nil {
+			if errors.Is(err, context.Canceled) || errors.Is(err, permission.ErrorPermissionDenied) {
+				return nil
+			}
+			return util.InfoMsg{Type: util.InfoTypeError, Msg: err.Error()}
+		}
+		if strings.TrimSpace(suggestion) == "" {
+			return util.InfoMsg{Type: util.InfoTypeInfo, Msg: "No suggestion available right now."}
+		}
+		return aiSuggestionMsg(suggestion)
+	}
 }
 
 const cancelTimerDuration = 2 * time.Second
@@ -3565,8 +3623,8 @@ func (m *UI) exportSession(sessionID string) tea.Cmd {
 			projectDir = "."
 		}
 
-		// Create exports directory
-		exportsDir := filepath.Join(projectDir, "docs", "exports")
+		// Use .floyd/exports directory to avoid polluting git tree
+		exportsDir := filepath.Join(projectDir, ".floyd", "exports")
 		if err := os.MkdirAll(exportsDir, 0755); err != nil {
 			return util.ReportError(fmt.Errorf("failed to create exports directory: %w", err))()
 		}
@@ -3580,7 +3638,6 @@ func (m *UI) exportSession(sessionID string) tea.Cmd {
 		return util.NewInfoMsg(fmt.Sprintf("Session exported to: %s", filePath))
 	}
 }
-
 
 // handlePasteMsg handles a paste message.
 func (m *UI) handlePasteMsg(msg tea.PasteMsg) tea.Cmd {

@@ -6,17 +6,29 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/legacy-ai/floyd/internal/agent/tools/mcp"
 )
 
+// ToolSource identifies where a tool originates from.
+type ToolSource string
+
+const (
+	// ToolSourceBuiltin indicates a tool compiled into the Floyd binary.
+	ToolSourceBuiltin ToolSource = "builtin"
+	// ToolSourceMCP indicates a tool provided by an MCP server.
+	ToolSourceMCP ToolSource = "mcp"
+)
+
 // RegistryEntry represents a single tool in the registry.
 type RegistryEntry struct {
-	Name        string   `json:"name"`
-	Server      string   `json:"server"`
-	Description string   `json:"description"`
-	Category    string   `json:"category,omitempty"`
+	Name        string     `json:"name"`
+	Server      string     `json:"server"`
+	Description string     `json:"description"`
+	Category    string     `json:"category,omitempty"`
+	Source      ToolSource `json:"source"`
 }
 
 // ToolRegistry represents the complete tool registry.
@@ -52,6 +64,7 @@ func BuildRegistry() *ToolRegistry {
 				Name:        tool.Name,
 				Server:      mcpName,
 				Description: tool.Description,
+				Source:      ToolSourceMCP,
 			}
 
 			// Determine category
@@ -314,4 +327,71 @@ func ServerCount() int {
 		count++
 	}
 	return count
+}
+
+// builtinEntries stores tools registered at init time by built-in packages.
+// Use RegisterBuiltin to add entries during init().
+var (
+	builtinMu     sync.RWMutex
+	builtinTools  []RegistryEntry
+)
+
+// RegisterBuiltin adds a built-in tool to the unified registry.
+// Call this from an init() function in the tool's package.
+func RegisterBuiltin(name, description, category string) {
+	builtinMu.Lock()
+	defer builtinMu.Unlock()
+	builtinTools = append(builtinTools, RegistryEntry{
+		Name:        name,
+		Server:      "builtin",
+		Description: description,
+		Category:    category,
+		Source:      ToolSourceBuiltin,
+	})
+}
+
+// GetBuiltinTools returns all registered built-in tools.
+func GetBuiltinTools() []RegistryEntry {
+	builtinMu.RLock()
+	defer builtinMu.RUnlock()
+	result := make([]RegistryEntry, len(builtinTools))
+	copy(result, builtinTools)
+	return result
+}
+
+// BuiltinToolCount returns the number of registered built-in tools.
+func BuiltinToolCount() int {
+	builtinMu.RLock()
+	defer builtinMu.RUnlock()
+	return len(builtinTools)
+}
+
+// BuildUnifiedRegistry builds the complete registry including both
+// MCP tools and built-in tools.
+func BuildUnifiedRegistry() *ToolRegistry {
+	registry := BuildRegistry()
+
+	builtinMu.RLock()
+	defer builtinMu.RUnlock()
+
+	registry.Tools = append(registry.Tools, builtinTools...)
+	registry.TotalTools = len(registry.Tools)
+
+	for _, entry := range builtinTools {
+		registry.ByCategory[entry.Category] = append(
+			registry.ByCategory[entry.Category],
+			fmt.Sprintf("builtin/%s", entry.Name),
+		)
+	}
+
+	// Merge builtin server into ByServer
+	var builtinNames []string
+	for _, entry := range builtinTools {
+		builtinNames = append(builtinNames, entry.Name)
+	}
+	if len(builtinNames) > 0 {
+		registry.ByServer["builtin"] = builtinNames
+	}
+
+	return registry
 }

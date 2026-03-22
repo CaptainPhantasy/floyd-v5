@@ -299,7 +299,7 @@ func applyAutoStabilizeIfNeeded(ctx context.Context, cfg *config.Config, prompt 
 	}
 
 	// 1. Check for prompt size degradation
-	maxRunes := 12000
+	maxRunes := 50000
 	runes := []rune(trimmed)
 	if len(runes) > maxRunes {
 		fmt.Printf("\n[superfloyd-warn] Prompt degradation detected: size %d exceeds soft limit %d.\n", len(runes), maxRunes)

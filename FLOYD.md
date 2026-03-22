@@ -1,6 +1,6 @@
-# FLOYD v5.2.0 — SOVEREIGN BOOT CONTRACT
+# FLOYD v5.3.0 — SOVEREIGN BOOT CONTRACT
 
-You are operating under the **v5.2.0 Production Protocol**. This repository is a sovereign workspace. All memory, context, and crystallized patterns are strictly bound to this project.
+You are operating under the **v5.3.0 Production Protocol**. This repository is a sovereign workspace. All memory, context, and crystallized patterns are strictly bound to this project.
 
 ## 0. PROJECT SOVEREIGNTY (THE PRIME DIRECTIVE)
 - **Local Memory**: You MUST retrieve and store all persistent state in `./.floyd/.supercache` (JSON).

@@ -4,14 +4,15 @@ import "charm.land/bubbles/v2/key"
 
 type KeyMap struct {
 	Editor struct {
-		AddFile         key.Binding
-		SendMessage     key.Binding
-		OpenEditor      key.Binding
-		Newline         key.Binding
-		AddImage        key.Binding
-		MentionFile     key.Binding
-		Commands        key.Binding
-		AcceptSuggestion key.Binding
+		AddFile           key.Binding
+		SendMessage       key.Binding
+		OpenEditor        key.Binding
+		Newline           key.Binding
+		AddImage          key.Binding
+		MentionFile       key.Binding
+		Commands          key.Binding
+		AcceptSuggestion  key.Binding
+		RequestSuggestion key.Binding
 
 		// Attachments key maps
 		AttachmentDeleteMode key.Binding
@@ -153,8 +154,12 @@ func DefaultKeyMap() KeyMap {
 		key.WithKeys("down"),
 	)
 	km.Editor.AcceptSuggestion = key.NewBinding(
-		key.WithKeys("ctrl+]"),
-		key.WithHelp("ctrl+]", "accept suggestion"),
+		key.WithKeys(AcceptSuggestionPrimaryBinding, "ctrl+y", "ctrl+]"),
+		key.WithHelp("`/^y/^]", "accept suggestion"),
+	)
+	km.Editor.RequestSuggestion = key.NewBinding(
+		key.WithKeys("ctrl+e"),
+		key.WithHelp("ctrl+e", "suggest now"),
 	)
 
 	km.Chat.NewSession = key.NewBinding(

@@ -66,6 +66,7 @@ type permissionService struct {
 	autoApproveSessionsMu sync.RWMutex
 	skip                  bool
 	allowedTools          []string
+	profiles              []ProfileGrant
 
 	// used to make sure we only process one request at a time
 	requestMu       sync.Mutex
@@ -145,6 +146,23 @@ func (s *permissionService) Request(ctx context.Context, opts CreatePermissionRe
 	commandKey := opts.ToolName + ":" + opts.Action
 	if slices.Contains(s.allowedTools, commandKey) || slices.Contains(s.allowedTools, opts.ToolName) {
 		return true, nil
+	}
+
+	// Check persistent permission profiles
+	if len(s.profiles) > 0 {
+		for _, grant := range s.profiles {
+			matched, granted := matchProfile(grant, opts.ToolName, opts.Action, opts.Path)
+			if matched {
+				if granted {
+					s.notificationBroker.Publish(pubsub.CreatedEvent, PermissionNotification{
+						ToolCallID: opts.ToolCallID,
+						Granted:    true,
+					})
+					return true, nil
+				}
+				return false, ErrorPermissionDenied
+			}
+		}
 	}
 
 	s.autoApproveSessionsMu.RLock()
@@ -233,7 +251,8 @@ func (s *permissionService) SkipRequests() bool {
 	return s.skip
 }
 
-func NewPermissionService(workingDir string, skip bool, allowedTools []string) Service {
+func NewPermissionService(workingDir string, skip bool, allowedTools []string, profileDir string) Service {
+	profiles, _ := LoadProfiles(profileDir)
 	return &permissionService{
 		Broker:              pubsub.NewBroker[PermissionRequest](),
 		notificationBroker:  pubsub.NewBroker[PermissionNotification](),
@@ -243,5 +262,6 @@ func NewPermissionService(workingDir string, skip bool, allowedTools []string) S
 		skip:                skip,
 		allowedTools:        allowedTools,
 		pendingRequests:     csync.NewMap[string, chan bool](),
+		profiles:            profiles,
 	}
 }

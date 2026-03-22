@@ -54,6 +54,10 @@ type Service interface {
 	UpdateTitleAndUsage(ctx context.Context, sessionID, title string, promptTokens, completionTokens, cacheReadTokens int64, cost float64) error
 	Delete(ctx context.Context, id string) error
 
+	// Fork creates a new session as a copy of sourceSessionID up to
+	// the given message index (-1 for all messages).
+	Fork(ctx context.Context, sourceSessionID string, upToMessage int) (*ForkResult, error)
+
 	// Agent tool session management
 	CreateAgentToolSessionID(messageID, toolCallID string) string
 	ParseAgentToolSessionID(sessionID string) (messageID string, toolCallID string, ok bool)

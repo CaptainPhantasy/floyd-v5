@@ -14,7 +14,7 @@
 | `floyd-explorer` | 5 tools | Project map, symbols, file reading, scratchpad | `FLOYD_CLI/dist/mcp/explorer-server.js` |
 | `floyd-patch` | 5 tools | Apply diffs, edit ranges, insert, delete | `FLOYD_CLI/dist/mcp/patch-server.js` |
 | `floyd-devtools` | 6 tools | Type analysis, git bisect, dependency graphs | `floyd-devtools-server/` |
-| `floyd-supercache` | 12 tools | 3-tier caching (project/reasoning/vault) | `floyd-supercache-server/` |
+| `novel-concepts` | 10 tools | Budget allocation, context compression, reasoning | `novel-concepts-server/` |
 | `floyd-safe-ops` | 3 tools | Impact simulation, safe operations | `floyd-safe-ops-server/` |
 | `floyd-terminal` | 9 tools | Terminal commands, process management | `floyd-terminal-server/` |
 | `gemini-tools` | 3 tools | Dependency visualization, bug freezing, trace replay | `gemini-tools-server/` |
@@ -151,28 +151,23 @@
 
 ---
 
-### floyd-supercache (12 tools)
-**Path:** `/Volumes/Storage/MCP/floyd-supercache-server/dist/index.js`
+### novel-concepts (10 tools)
+**Path:** `/Volumes/Storage/MCP/novel-concepts-server/dist/index.js`
 
 | Tool | When to Call | Description |
 |------|--------------|-------------|
-| `cache_store` | Saving computed results | Store JSON data with optional TTL |
-| `cache_retrieve` | Retrieving cached data | Fast lookup by key |
-| `cache_delete` | Removing cache entries | Single entry deletion |
-| `cache_clear` | Clearing entire tier | Clears project/reasoning/vault |
-| `cache_list` | Listing cached items | Paginated listing |
-| `cache_search` | Finding entries | Full-text search across all tiers |
-| `cache_stats` | Cache health | Size, count, hit tracking |
-| `cache_prune` | Removing expired entries | Auto-cleanup |
-| `cache_store_pattern` | Storing reusable patterns | Save patterns for later reuse |
-| `cache_store_reasoning` | Storing reasoning chains | Persistent reasoning chains |
-| `cache_load_reasoning` | Loading reasoning chains | Retrieve previous reasoning |
-| `cache_archive_reasoning` | Archiving to vault | Move reasoning to long-term storage |
+| `compute_budget_allocator` | First call on every new session | Task complexity scoring → compute allocation |
+| `adaptive_context_compressor` | Context window pressure | Semantic compression with importance scoring |
+| `analogy_synthesizer` | Explaining complex concepts | Cross-domain analogy generation |
+| `concept_web_weaver` | Knowledge graph operations | Build/query concept graphs |
+| `consensus_protocol` | Multi-perspective decisions | Structured agreement finding |
+| `distributed_task_board` | Complex task decomposition | Task breakdown and coordination |
+| `episodic_memory_bank` | Session history | Store/retrieve episodic memories |
+| `execution_trace_synthesizer` | Debugging workflows | Trace execution paths |
+| `refactoring_orchestrator` | Code restructuring | Safe refactoring coordination |
+| `semantic_diff_validator` | Change validation | Semantic diff analysis |
 
-**Tier Details:**
-- **project** (default): Session data, 1-hour TTL default, in-memory + file backing
-- **reasoning**: Persistent reasoning chains, no TTL
-- **vault**: Long-term patterns and solutions, no TTL
+**Note:** Project memory is stored locally in `.floyd/.supercache` — do NOT use any external cache server.
 
 **Storage Path:** `~/.floyd/supercache/{tier}/{key}.json`
 
@@ -398,7 +393,7 @@
 | floyd-git | `/Volumes/Storage/FLOYD_CLI/dist/mcp/git-server.js` |
 | floyd-explorer | `/Volumes/Storage/FLOYD_CLI/dist/mcp/explorer-server.js` |
 | floyd-devtools | `/Volumes/Storage/MCP/floyd-devtools-server/dist/index.js` |
-| floyd-supercache | `/Volumes/Storage/MCP/floyd-supercache-server/dist/index.js` |
+| novel-concepts | `/Volumes/Storage/MCP/novel-concepts-server/dist/index.js` |
 | floyd-safe-ops | `/Volumes/Storage/MCP/floyd-safe-ops-server/dist/index.js` |
 | floyd-terminal | `/Volumes/Storage/MCP/floyd-terminal-server/dist/index.js` |
 | pattern-crystallizer-v2 | `/Volumes/Storage/MCP/pattern-crystallizer-v2/dist/index.js` |
@@ -424,7 +419,7 @@ Need type error diagnosis?                 → floyd-devtools/typescript_semanti
 Need to find breaking commit?              → floyd-devtools/git_bisect
 Need to check git status?                  → floyd-git/git_status
 Need to commit changes?                    → floyd-git/git_commit
-Need to save reasoning for later?          → floyd-supercache/cache_store (tier: reasoning)
+Need to save reasoning for later?          → Write to .floyd/.supercache (local project file)
 Need to analyze screenshot?                → 4_5v_mcp/analyze_image
 ```
 
@@ -436,7 +431,7 @@ Need to analyze screenshot?                → 4_5v_mcp/analyze_image
 4. typescript_semantic_analyzer → Find type errors
 5. git_bisect → Find when error was introduced
 6. monorepo_dependency_analyzer → Check blast radius
-7. cache_store → Save findings for later
+7. Write findings to .floyd/.supercache
 ```
 
 ---

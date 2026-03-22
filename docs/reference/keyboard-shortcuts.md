@@ -29,6 +29,8 @@ These work when the input field is focused.
 | `Enter` | Send message |
 | `Shift+Enter` | Newline |
 | `Ctrl+J` | Newline (alternate) |
+| `` ` `` / `Ctrl+Y` / `Ctrl+]` | Accept AI suggestion / ghost text |
+| `Ctrl+E` | Request AI suggestion now |
 | `/` | Add file or open commands |
 | `@` | Mention a file |
 | `Ctrl+F` | Add image or attachment |
@@ -184,7 +186,8 @@ When the embedded terminal is focused.
 │  Ctrl+G  Help   │  Shift+Enter Newl │  d/u      Half page                   │
 │  Ctrl+P  Cmds   │  /         File   │  f/b      Full page                   │
 │  Ctrl+L  Model  │  @         Ment.  │  g/G      Top/Bottom                  │
-│  Ctrl+S  Sess.  │  Ctrl+F   Image   │  Space    Expand                      │
+│  Ctrl+S  Sess.  │  ` / ^Y/^] Suggest│  Space    Expand                      │
+│                │  ^E        Ask AI  │                                      │
 │  Ctrl+T  Term   │  Ctrl+O   Editor  │  c/y      Copy                        │
 │  Ctrl+N  New    │  Up/Down  History │  Esc      Cancel                      │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -200,3 +203,5 @@ When the embedded terminal is focused.
 4. **Copy code**: Navigate to a code block and press `c` or `y`
 5. **Multi-line**: Use `Shift+Enter` or `Ctrl+J` for newlines in your prompt
 6. **Cancel anything**: `Esc` usually cancels the current action
+7. **Accept suggestion fallback**: If your terminal doesn't pass backtick reliably, use `Ctrl+Y` first, then `Ctrl+]`
+8. **Request a suggestion**: Press `Ctrl+E` to ask AI for a suggestion on demand

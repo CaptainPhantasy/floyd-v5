@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
 	"log/slog"
 	"os"
 	"strings"
@@ -80,15 +81,23 @@ func New(ctx context.Context, conn *sql.DB, cfg *config.Config) (*App, error) {
 	files := history.NewService(q, conn)
 	skipPermissionsRequests := cfg.Permissions != nil && cfg.Permissions.SkipRequests
 	var allowedTools []string
-	if cfg.Permissions != nil && cfg.Permissions.AllowedTools != nil {
-		allowedTools = cfg.Permissions.AllowedTools
+	profileDir := ""
+	if cfg.Permissions != nil {
+		if cfg.Permissions.AllowedTools != nil {
+			allowedTools = cfg.Permissions.AllowedTools
+		}
+		if cfg.Permissions.ProfileDir != "" {
+			profileDir = cfg.Permissions.ProfileDir
+		} else {
+			profileDir = filepath.Join(cfg.WorkingDir(), ".floyd", "permissions")
+		}
 	}
 
 	app := &App{
 		Sessions:    sessions,
 		Messages:    messages,
 		History:     files,
-		Permissions: permission.NewPermissionService(cfg.WorkingDir(), skipPermissionsRequests, allowedTools),
+		Permissions: permission.NewPermissionService(cfg.WorkingDir(), skipPermissionsRequests, allowedTools, profileDir),
 		FileTracker: filetracker.NewService(q),
 		LSPClients:  csync.NewMap[string, *lsp.Client](),
 

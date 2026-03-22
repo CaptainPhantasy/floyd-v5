@@ -6,33 +6,52 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
-var homedir, homedirErr = os.UserHomeDir()
+var (
+	homedir    string
+	homedirErr error
+	homedirOnce sync.Once
+)
 
-func init() {
-	if homedirErr != nil {
-		slog.Error("Failed to get user home directory", "error", homedirErr)
-	}
+// getHomeDir lazily initializes the home directory on first access.
+func getHomeDir() (string, error) {
+	homedirOnce.Do(func() {
+		homedir, homedirErr = os.UserHomeDir()
+		if homedirErr != nil {
+			slog.Error("Failed to get user home directory", "error", homedirErr)
+		}
+	})
+	return homedir, homedirErr
 }
 
 // Dir returns the user home directory.
+// Deprecated: Use DirE for proper error handling.
 func Dir() string {
-	return homedir
+	dir, _ := getHomeDir()
+	return dir
+}
+
+// DirE returns the user home directory with error handling.
+func DirE() (string, error) {
+	return getHomeDir()
 }
 
 // Short replaces the actual home path from [Dir] with `~`.
 func Short(p string) string {
-	if homedir == "" || !strings.HasPrefix(p, homedir) {
+	dir, err := getHomeDir()
+	if err != nil || dir == "" || !strings.HasPrefix(p, dir) {
 		return p
 	}
-	return filepath.Join("~", strings.TrimPrefix(p, homedir))
+	return filepath.Join("~", strings.TrimPrefix(p, dir))
 }
 
 // Long replaces the `~` with actual home path from [Dir].
 func Long(p string) string {
-	if homedir == "" || !strings.HasPrefix(p, "~") {
+	dir, err := getHomeDir()
+	if err != nil || dir == "" || !strings.HasPrefix(p, "~") {
 		return p
 	}
-	return strings.Replace(p, "~", homedir, 1)
+	return strings.Replace(p, "~", dir, 1)
 }

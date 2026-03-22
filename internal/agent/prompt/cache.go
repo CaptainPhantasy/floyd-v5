@@ -3,6 +3,8 @@ package prompt
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -74,9 +76,33 @@ func buildDynamicContext(data PromptDat) string {
 
 	fmt.Fprintf(&sb, "Platform: %s\n", data.Platform)
 	fmt.Fprintf(&sb, "Today's date: %s\n", data.Date)
+
+	// Auto-inject .supercache content so the agent doesn't waste a tool call
+	// reading it on every boot. The supercache is a small JSON file with
+	// project identity and last-known state.
+	if supercache := readSupercache(data.WorkingDir); supercache != "" {
+		fmt.Fprintf(&sb, "\nProject state (.supercache): %s\n", supercache)
+	}
+
 	sb.WriteString("</env>")
 
 	return sb.String()
+}
+
+// readSupercache reads the .floyd/.supercache file if it exists.
+// Returns empty string if not found or on any error.
+func readSupercache(workingDir string) string {
+	path := filepath.Join(workingDir, ".floyd", ".supercache")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	content := strings.TrimSpace(string(data))
+	// Cap at 2KB to prevent bloated supercaches from poisoning context
+	if len(content) > 2048 {
+		content = content[:2048] + "... [truncated]"
+	}
+	return content
 }
 
 // PromptDataForDynamic creates a PromptDat for building dynamic context only.

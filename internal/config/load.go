@@ -427,6 +427,25 @@ func (c *Config) setDefaults(workingDir, dataDir string) {
 		c.Options.RuntimeProfile = string(NormalizeRuntimeProfile(c.Options.RuntimeProfile))
 	}
 
+	// FLOYD_THINKING_LEVEL overrides reasoning_effort on the large model.
+	// Accepted values: MAX/high, medium, low. Only applies if no explicit
+	// reasoning_effort is already configured.
+	if lvl, ok := os.LookupEnv("FLOYD_THINKING_LEVEL"); ok {
+		if large, exists := c.Models[SelectedModelTypeLarge]; exists && large.ReasoningEffort == "" {
+			switch strings.ToLower(strings.TrimSpace(lvl)) {
+			case "max", "high":
+				large.ReasoningEffort = "high"
+				large.Think = true
+			case "medium", "med":
+				large.ReasoningEffort = "medium"
+				large.Think = true
+			case "low", "min":
+				large.ReasoningEffort = "low"
+			}
+			c.Models[SelectedModelTypeLarge] = large
+		}
+	}
+
 	if c.Options.Attribution == nil {
 		c.Options.Attribution = &Attribution{
 			TrailerStyle:  TrailerStyleAssistedBy,

@@ -7,10 +7,10 @@ import (
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
+	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/legacy-ai/floyd/internal/session"
 	"github.com/legacy-ai/floyd/internal/ui/common"
 	"github.com/legacy-ai/floyd/internal/ui/util"
-	uv "github.com/charmbracelet/ultraviolet"
 )
 
 // RenameSessionID is the identifier for the rename session dialog.
@@ -18,11 +18,11 @@ const RenameSessionID = "rename_session"
 
 // RenameSession is a dialog for renaming the current session.
 type RenameSession struct {
-	com       *common.Common
-	help      help.Model
-	input     textinput.Model
-	session   session.Session
-	sessions  session.Service
+	com      *common.Common
+	help     help.Model
+	input    textinput.Model
+	session  session.Session
+	sessions session.Service
 
 	keyMap struct {
 		Submit key.Binding
@@ -96,7 +96,7 @@ func (m *RenameSession) confirmRename() Action {
 
 func (m *RenameSession) renameSessionCmd() tea.Cmd {
 	return func() tea.Msg {
-		_, err := m.sessions.Save(context.TODO(), m.session)
+		_, err := m.sessions.Save(context.Background(), m.session)
 		if err != nil {
 			return util.NewErrorMsg(err)
 		}
@@ -115,7 +115,7 @@ func (m *RenameSession) Draw(scr uv.Screen, area uv.Rectangle) *tea.Cursor {
 	width := max(0, min(defaultDialogMaxWidth, area.Dx()))
 	innerWidth := width - t.Dialog.View.GetHorizontalFrameSize() - 2
 
-	m.input.SetWidth(max(0, innerWidth - t.Dialog.InputPrompt.GetHorizontalFrameSize() - 1))
+	m.input.SetWidth(max(0, innerWidth-t.Dialog.InputPrompt.GetHorizontalFrameSize()-1))
 	m.help.SetWidth(innerWidth)
 
 	rc := NewRenderContext(t, width)

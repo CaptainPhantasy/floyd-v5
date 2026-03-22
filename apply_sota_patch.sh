@@ -2,7 +2,7 @@
 set -e
 
 # ==============================================================================
-# FLOYD v5.2.0 - SOTA ARCHITECTURAL OVERHAUL & GLM OPTIMIZATION
+# FLOYD v5.3.0 - SOTA ARCHITECTURAL OVERHAUL & GLM OPTIMIZATION
 # Focus: Structural Thinking Levels, Artifact Proactivity, & Closed-Loop Healing
 # ==============================================================================
 
@@ -125,7 +125,7 @@ echo -e "${BLUE}[3/6] Setting Framework Thinking Levels in .env.local...${NC}"
 
 # Create .env.local in project root (will be loaded by godotenv in main.go)
 cat << 'EOF' > .env.local
-# FLOYD v5.2.0 SOTA Structural Configuration
+# FLOYD v5.3.0 SOTA Structural Configuration
 FLOYD_THINKING_LEVEL=MAX
 SUPERFLOYD_QUALITY_GATES=1
 SUPERFLOYD_CONSISTENCY_LOCK=1

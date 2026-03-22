@@ -1,16 +1,16 @@
-# FLOYD v5.2.0 - Quick Start & Feature Guide
+# FLOYD v5.3.0 - Quick Start & Feature Guide
 
-Welcome to **FLOYD v5.2.0** and **SUPERFLOYD v5.2.0**! This guide is designed to be easily ingestible by both human developers and LLM agents to rapidly understand the state-of-the-art (SOTA) enterprise upgrades.
+Welcome to **FLOYD v5.3.0** and **SUPERFLOYD v5.3.0**! This guide is designed to be easily ingestible by both human developers and LLM agents to rapidly understand the state-of-the-art (SOTA) enterprise upgrades.
 
 ## Core Identity Schism: Floyd vs. SuperFloyd
 
-Version 5.2.0 introduces a hard split in reasoning architecture:
+Version 5.3.0 introduces a hard split in reasoning architecture:
 - **FLOYD**: General-purpose operational agent. Optimized for rapid project analysis, state management, and file traversal.
 - **SUPERFLOYD**: SOTA coding specialist, full-stack architect, and UI expert. Handles deep, surgical edits, and complex AST-aware transformations.
 
 ## Side-by-Side: Former vs. Upgraded Capabilities
 
-| Capability | v5.0 / Former | v5.2.0 (New!) |
+| Capability | v5.0 / Former | v5.3.0 (New!) |
 | :--- | :--- | :--- |
 | **Tool Scope** | Basic bash, edit, file view | 6 new highly-specialized tools mapped to roles |
 | **Logic Reasoning** | Contradictory instructions on `<think>` | Mandatory `<think>` logic blocks via deterministic prompt |

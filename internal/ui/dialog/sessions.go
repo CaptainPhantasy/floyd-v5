@@ -9,11 +9,11 @@ import (
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/legacy-ai/floyd/internal/session"
 	"github.com/legacy-ai/floyd/internal/ui/common"
 	"github.com/legacy-ai/floyd/internal/ui/list"
 	"github.com/legacy-ai/floyd/internal/ui/util"
-	uv "github.com/charmbracelet/ultraviolet"
 )
 
 // SessionsID is the identifier for the session selector dialog.
@@ -61,7 +61,7 @@ func NewSessions(com *common.Common, selectedSessionID string) (*Session, error)
 	s := new(Session)
 	s.sessionsMode = sessionsModeNormal
 	s.com = com
-	sessions, err := com.App.Sessions.List(context.TODO())
+	sessions, err := com.App.Sessions.List(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -351,7 +351,7 @@ func (s *Session) removeSession(id string) {
 
 func (s *Session) deleteSessionCmd(id string) tea.Cmd {
 	return func() tea.Msg {
-		err := s.com.App.Sessions.Delete(context.TODO(), id)
+		err := s.com.App.Sessions.Delete(context.Background(), id)
 		if err != nil {
 			return util.NewErrorMsg(err)
 		}
@@ -387,7 +387,7 @@ func (s *Session) updateSession(session session.Session) {
 
 func (s *Session) updateSessionCmd(session session.Session) tea.Cmd {
 	return func() tea.Msg {
-		_, err := s.com.App.Sessions.Save(context.TODO(), session)
+		_, err := s.com.App.Sessions.Save(context.Background(), session)
 		if err != nil {
 			return util.NewErrorMsg(err)
 		}
