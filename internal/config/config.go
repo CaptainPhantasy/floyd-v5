@@ -224,6 +224,7 @@ func (c Completions) Limits() (depth, items int) {
 type Permissions struct {
 	AllowedTools []string `json:"allowed_tools,omitempty" jsonschema:"description=List of tools that don't require permission prompts,example=bash,example=view"` // Tools that don't require permission prompts
 	SkipRequests bool     `json:"-"`                                                                                                                              // Automatically accept all permissions (YOLO mode)
+	ProfileDir   string   `json:"profile_dir,omitempty" jsonschema:"description=Directory containing permission profile files,default=.floyd/permissions,example=.floyd/permissions"`
 }
 
 type TrailerStyle string
@@ -268,11 +269,17 @@ type Options struct {
 	InitializeAs              string       `json:"initialize_as,omitempty" jsonschema:"description=Name of the context file to create/update during project initialization,default=FLOYD.md,example=FLOYD.md,example=AGENTS.md,example=CLAUDE.md,example=docs/LLMs.md"`
 	AutoLSP                   *bool        `json:"auto_lsp,omitempty" jsonschema:"description=Automatically setup LSPs based on root markers,default=true"`
 	Progress                  *bool        `json:"progress,omitempty" jsonschema:"description=Show indeterminate progress updates during long operations,default=true"`
-	CacheMode                 string       `json:"cache_mode,omitempty" jsonschema:"description=Prompt caching mode,enum=auto,enum=static,enum=disabled,default=auto"`
+	CacheMode                 string          `json:"cache_mode,omitempty" jsonschema:"description=Prompt caching mode,enum=auto,enum=static,enum=disabled,default=auto"`
+	Budget                   *BudgetConfig    `json:"budget,omitempty" jsonschema:"description=Token budget settings for cost control"`
 }
 
 type FileOps struct {
 	MaxReadSizeBytes int64 `json:"max_read_size_bytes,omitempty" jsonschema:"description=Maximum file size in bytes to read,default=10485760,example=10485760"`
+}
+
+type BudgetConfig struct {
+	MaxUSD      float64 `json:"max_usd,omitempty" jsonschema:"description=Maximum token spend in USD per session,example=5.0,example=10.0"`
+	WarnPercent float64 `json:"warn_percent,omitempty" jsonschema:"description=Percentage of budget at which a warning is injected,example=80,default=80"`
 }
 
 type Execution struct {

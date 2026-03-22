@@ -21,6 +21,11 @@ func NewGetActiveDiffTool(wd string) fantasy.AgentTool {
 		"get_active_diff",
 		string(getActiveDiffDescription),
 		func(ctx context.Context, params GetActiveDiffParams, call fantasy.ToolCall) (fantasy.ToolResponse, error) {
+			// Validate git binary exists in PATH
+			if _, err := lookupBinary("git"); err != nil {
+				return fantasy.NewTextResponse("git binary not found in PATH. Please ensure git is installed."), nil
+			}
+
 			args := []string{"diff"}
 			if params.StagedOnly {
 				args = append(args, "--staged")

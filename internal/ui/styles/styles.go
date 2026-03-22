@@ -13,8 +13,18 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/alecthomas/chroma/v2"
 	"github.com/charmbracelet/x/exp/charmtone"
+	"github.com/lucasb-eyer/go-colorful"
 	"github.com/legacy-ai/floyd/internal/ui/diffview"
 )
+
+// blendColor mixes a foreground color into a background color at ratio t
+// (0.0 = pure bg, 1.0 = pure fg). Used to derive tinted diff backgrounds
+// that adapt when the user switches themes.
+func blendColor(fg, bg color.Color, t float64) color.Color {
+	fgC, _ := colorful.MakeColor(fg)
+	bgC, _ := colorful.MakeColor(bg)
+	return bgC.BlendRgb(fgC, t)
+}
 
 const (
 	CheckIcon   string = "✓"
@@ -73,7 +83,7 @@ type Styles struct {
 
 	// Header
 	Header struct {
-		Charm        lipgloss.Style // Style for "Charm™" label
+		Brand        lipgloss.Style // Style for "Legacy AI / Floyd's Labs" label
 		Diagonals    lipgloss.Style // Style for diagonal separators (╱)
 		Percentage   lipgloss.Style // Style for context percentage
 		Keystroke    lipgloss.Style // Style for keystroke hints (e.g., "ctrl+d")
@@ -159,7 +169,7 @@ type Styles struct {
 	LogoFieldColor   color.Color
 	LogoTitleColorA  color.Color
 	LogoTitleColorB  color.Color
-	LogoCharmColor   color.Color
+	LogoBrandColor   color.Color
 	LogoVersionColor color.Color
 
 	// activeTheme tracks which theme preset is currently applied.
@@ -530,10 +540,24 @@ func DefaultStyles() Styles {
 		greenLight = charmtone.Bok
 		green      = charmtone.Julep
 		greenDark  = charmtone.Guac
-		// greenLight = charmtone.Bok
 
 		red     = charmtone.Coral
 		redDark = charmtone.Sriracha
+
+		// Diff red foreground: WCAG AA requires ≥4.5:1 contrast.
+		// charmtone.Sriracha (#EB4268) reaches only 4.29:1 on bgBase.
+		// Brightening toward white at t=0.10 yields #ED6C82 → 5.50:1
+		// on bgBase (AA pass).  LineNumber and Symbol backgrounds use
+		// bgBase (not bgBaseLighter) to maximise foreground contrast.
+		diffRedFg = blendColor(color.RGBA{R: 255, G: 255, B: 255}, redDark, 0.10)
+
+		// Derived background tints for diff highlighting.
+		// These blend the semantic color with the base background
+		// so that theme switches propagate into diff views.
+		greenDarkBg = blendColor(greenDark, bgBase, 0.15)
+		redDarkBg   = blendColor(redDark, bgBase, 0.15)
+		// LineNumber backgrounds use bgBase directly to maximise
+		// WCAG AA contrast for the line-number foreground text.
 		// redLight = charmtone.Salmon
 		// cherry   = charmtone.Cherry
 	)
@@ -1027,23 +1051,23 @@ func DefaultStyles() Styles {
 		},
 		InsertLine: diffview.LineStyle{
 			LineNumber: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#629657")).
-				Background(lipgloss.Color("#2b322a")),
+				Foreground(greenDark).
+				Background(bgBase),
 			Symbol: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#629657")).
-				Background(lipgloss.Color("#323931")),
+				Foreground(greenDark).
+				Background(bgBase),
 			Code: lipgloss.NewStyle().
-				Background(lipgloss.Color("#323931")),
+				Background(greenDarkBg),
 		},
 		DeleteLine: diffview.LineStyle{
 			LineNumber: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#a45c59")).
-				Background(lipgloss.Color("#312929")),
+				Foreground(diffRedFg).
+				Background(bgBase),
 			Symbol: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#a45c59")).
-				Background(lipgloss.Color("#383030")),
+				Foreground(diffRedFg).
+				Background(bgBase),
 			Code: lipgloss.NewStyle().
-				Background(lipgloss.Color("#383030")),
+				Background(redDarkBg),
 		},
 	}
 
@@ -1078,7 +1102,7 @@ func DefaultStyles() Styles {
 	s.TagInfo = s.TagBase.Background(blueLight)
 
 	// Compact header styles
-	s.Header.Charm = base.Foreground(secondary)
+	s.Header.Brand = base.Foreground(secondary)
 	s.Header.Diagonals = base.Foreground(primary)
 	s.Header.Percentage = s.Muted
 	s.Header.Keystroke = s.Muted
@@ -1191,7 +1215,7 @@ func DefaultStyles() Styles {
 	s.LogoFieldColor = primary
 	s.LogoTitleColorA = secondary
 	s.LogoTitleColorB = primary
-	s.LogoCharmColor = secondary
+	s.LogoBrandColor = secondary
 	s.LogoVersionColor = primary
 	s.activeTheme = ThemeDefault
 	s.initThemes()

@@ -65,7 +65,7 @@ func (c *coordinator) agenticFetchTool(_ context.Context, client *http.Client) (
 
 	return fantasy.NewParallelAgentTool(
 		tools.AgenticFetchToolName,
-		"[DEPRECATED in v5.2.0] Use sandboxed MCP tools like web-search-prime or web-reader for fetch operations. This tool is retained for backward compatibility only and will be removed in future versions.",
+		"[DEPRECATED in v5.3.0] Use sandboxed MCP tools like web-search-prime or web-reader for fetch operations. This tool is retained for backward compatibility only and will be removed in future versions.",
 		func(ctx context.Context, params tools.AgenticFetchParams, call fantasy.ToolCall) (fantasy.ToolResponse, error) {
 			validationResult, err := validateAgenticFetchParams(ctx, params)
 			if err != nil {
@@ -210,7 +210,7 @@ func (c *coordinator) agenticFetchTool(_ context.Context, client *http.Client) (
 				PresencePenalty:  small.ModelCfg.PresencePenalty,
 			})
 			if err != nil {
-				return fantasy.NewTextErrorResponse("error generating response"), nil
+				return fantasy.NewTextErrorResponse(fmt.Sprintf("CRITICAL FAILURE: Sub-agent crashed with error: '%v'. This usually means the webpage threw a 403 Anti-Bot block or the context limit saturated. PIVOT IMMEDIATELY to 'mcp_open-anvil_read_page' or 'mcp_web-reader' instead. DO NOT retry agentic_fetch.", err)), nil
 			}
 
 			updatedSession, err := c.sessions.Get(ctx, session.ID)

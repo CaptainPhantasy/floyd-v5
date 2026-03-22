@@ -118,7 +118,7 @@ func testEnv(t *testing.T) fakeEnv {
 	sessions := session.NewService(q, conn)
 	messages := message.NewService(q)
 
-	permissions := permission.NewPermissionService(workingDir, true, []string{})
+	permissions := permission.NewPermissionService(workingDir, true, []string{}, "")
 	history := history.NewService(q, conn)
 	filetrackerService := filetracker.NewService(q)
 	lspClients := csync.NewMap[string, *lsp.Client]()
@@ -154,7 +154,7 @@ func testSessionAgent(env fakeEnv, large, small fantasy.LanguageModel, systemPro
 			DefaultMaxTokens: 10000,
 		},
 	}
-	agent := NewSessionAgent(SessionAgentOptions{largeModel, smallModel, "", systemPrompt, false, false, true, env.sessions, env.messages, tools})
+	agent := NewSessionAgent(SessionAgentOptions{largeModel, smallModel, "", systemPrompt, false, false, true, env.sessions, env.messages, tools, ""})
 	return agent
 }
 

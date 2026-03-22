@@ -2,6 +2,9 @@
 Input: Web Documentation (HTML/Text)
 Task: Parse for implementation details.
 
+## DEPRECATION NOTICE
+**[DEPRECATED in v5.3.0]** This tool uses legacy fetching. If you encounter a `403 Forbidden`, `error generating response`, or anti-bot protection, **DO NOT RETRY this tool**. Pivot immediately to `mcp_open-anvil` (browser automation) or `mcp_web-reader` (headless reader).
+
 ## Extraction Rules
 1. **Signatures Only:** Extract Go structs, interfaces, and function signatures.
 2. **Configuration:** Extract YAML/JSON schemas.
@@ -13,4 +16,4 @@ Task: Parse for implementation details.
 - url: specific page to parse (optional - searches if omitted)
 
 ## MCP Preference
-If available, use mcp_web-reader or mcp_web-search-prime for direct extraction.
+If available, use `mcp_web-reader` or `mcp_open-anvil_read_page` for direct extraction to bypass bot blockers.

@@ -5,6 +5,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"github.com/lucasb-eyer/go-colorful"
+	"github.com/legacy-ai/floyd/internal/ui/diffview"
 )
 
 // ThemeName is the display name of a theme.
@@ -33,7 +34,7 @@ type ThemePreset struct {
 	// Logo gradient endpoints.
 	LogoColorA color.Color
 	LogoColorB color.Color
-	LogoCharm  color.Color
+	LogoBrand  color.Color
 	LogoField  color.Color
 
 	// Status accent overrides (nil = keep default).
@@ -42,6 +43,7 @@ type ThemePreset struct {
 	Blue      color.Color
 	BlueDark  color.Color
 	Red       color.Color
+	RedDark   color.Color
 }
 
 // mustHex parses a hex color string and panics on failure.
@@ -68,13 +70,14 @@ func init() {
 			BorderFocus: mustHex("#FF5F6D"),
 			LogoColorA:  mustHex("#FF5F6D"),
 			LogoColorB:  mustHex("#FFC371"),
-			LogoCharm:   mustHex("#FFC371"),
+			LogoBrand:   mustHex("#FFC371"),
 			LogoField:   mustHex("#FF5F6D"),
 			Green:       mustHex("#FFB347"),
 			GreenDark:   mustHex("#FF8C42"),
 			Blue:        mustHex("#FF6B6B"),
 			BlueDark:    mustHex("#CC4455"),
 			Red:         mustHex("#FF4444"),
+			RedDark:     mustHex("#E05848"),
 		},
 		{
 			Name:        ThemeDeepSea,
@@ -84,13 +87,14 @@ func init() {
 			BorderFocus: mustHex("#00CED1"),
 			LogoColorA:  mustHex("#00FFFF"),
 			LogoColorB:  mustHex("#0055FF"),
-			LogoCharm:   mustHex("#00FFFF"),
+			LogoBrand:   mustHex("#00FFFF"),
 			LogoField:   mustHex("#0055FF"),
 			Green:       mustHex("#00E5CC"),
 			GreenDark:   mustHex("#00B89C"),
 			Blue:        mustHex("#00BFFF"),
 			BlueDark:    mustHex("#0077B6"),
 			Red:         mustHex("#FF6B9D"),
+			RedDark:     mustHex("#D05088"),
 		},
 		{
 			Name:        ThemeNeonHacker,
@@ -100,13 +104,14 @@ func init() {
 			BorderFocus: mustHex("#39FF14"),
 			LogoColorA:  mustHex("#39FF14"),
 			LogoColorB:  mustHex("#006400"),
-			LogoCharm:   mustHex("#00FF41"),
+			LogoBrand:   mustHex("#00FF41"),
 			LogoField:   mustHex("#39FF14"),
 			Green:       mustHex("#39FF14"),
 			GreenDark:   mustHex("#228B22"),
 			Blue:        mustHex("#00FF41"),
 			BlueDark:    mustHex("#006400"),
 			Red:         mustHex("#FF3131"),
+			RedDark:     mustHex("#E04848"),
 		},
 	}
 }
@@ -127,13 +132,14 @@ func (s *Styles) initThemes() {
 		BorderFocus: s.BorderColor,
 		LogoColorA:  s.LogoTitleColorA,
 		LogoColorB:  s.LogoTitleColorB,
-		LogoCharm:   s.LogoCharmColor,
+		LogoBrand:   s.LogoBrandColor,
 		LogoField:   s.LogoFieldColor,
 		Green:       s.Green,
 		GreenDark:   s.GreenDark,
 		Blue:        s.Blue,
 		BlueDark:    s.BlueDark,
 		Red:         s.Red,
+		RedDark:     s.RedDark,
 	}
 }
 
@@ -169,16 +175,19 @@ func (s *Styles) ApplyTheme(t ThemePreset) {
 	if t.Red != nil {
 		s.Red = t.Red
 	}
+	if t.RedDark != nil {
+		s.RedDark = t.RedDark
+	}
 
 	// --- Logo ---
 	s.LogoTitleColorA = t.LogoColorA
 	s.LogoTitleColorB = t.LogoColorB
-	s.LogoCharmColor = t.LogoCharm
+	s.LogoBrandColor = t.LogoBrand
 	s.LogoFieldColor = t.LogoField
 	s.LogoVersionColor = t.Primary
 
 	// --- Header ---
-	s.Header.Charm = lipgloss.NewStyle().Foreground(t.Secondary)
+	s.Header.Brand = lipgloss.NewStyle().Foreground(t.Secondary)
 	s.Header.Diagonals = lipgloss.NewStyle().Foreground(t.Primary)
 
 	// --- Borders ---
@@ -269,6 +278,27 @@ func (s *Styles) ApplyTheme(t ThemePreset) {
 
 	// --- LSP / MCP online icon ---
 	s.ItemOnlineIcon = lipgloss.NewStyle().Foreground(t.GreenDark).SetString("●")
+
+	// --- Diff view ---
+	// Re-derive tinted backgrounds and AA-compliant foreground so
+	// diff highlighting follows the active theme.
+	greenDarkBg := blendColor(s.GreenDark, s.Background, 0.15)
+	redDarkBg := blendColor(s.RedDark, s.Background, 0.15)
+	// WCAG AA ≥4.5:1 for diff red foreground: brighten RedDark toward
+	// white at t=0.10 so it clears the threshold on bgBase.
+	diffRedFg := blendColor(color.RGBA{R: 255, G: 255, B: 255}, s.RedDark, 0.10)
+	// LineNumber and Symbol backgrounds use s.Background (not
+	// BgBaseLighter) to maximise WCAG AA foreground contrast.
+	s.Diff.InsertLine = diffview.LineStyle{
+		LineNumber: lipgloss.NewStyle().Foreground(s.GreenDark).Background(s.Background),
+		Symbol:     lipgloss.NewStyle().Foreground(s.GreenDark).Background(s.Background),
+		Code:       lipgloss.NewStyle().Background(greenDarkBg),
+	}
+	s.Diff.DeleteLine = diffview.LineStyle{
+		LineNumber: lipgloss.NewStyle().Foreground(diffRedFg).Background(s.Background),
+		Symbol:     lipgloss.NewStyle().Foreground(diffRedFg).Background(s.Background),
+		Code:       lipgloss.NewStyle().Background(redDarkBg),
+	}
 }
 
 // CycleTheme advances to the next theme preset, applies it, and

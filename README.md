@@ -18,7 +18,7 @@ Floyd brings AI coding assistants directly into your terminal with a full-featur
 ## Prerequisites
 
 - **Go 1.25+**
-- **Docker / OrbStack**: Required for v5.2.0+ Ephemeral Sandboxing. The engine uses Docker to run untrusted code and bypass local host restrictions.
+- **Docker / OrbStack**: Required for v5.3.0+ Ephemeral Sandboxing. The engine uses Docker to run untrusted code and bypass local host restrictions.
 - **MCP Servers**: Model Context Protocol must be configured in `floyd.json`.
 
 ## Installation

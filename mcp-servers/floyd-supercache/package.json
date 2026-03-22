@@ -1,0 +1,26 @@
+{
+  "name": "@floyd/supercache-server",
+  "version": "1.0.0",
+  "description": "MCP server for FLOYD SUPERCACHE - 3-tier intelligent memory system",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "start:http": "node dist/http-server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "proper-lockfile": "^4.1.2",
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@types/proper-lockfile": "^4.1.4",
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "typescript": "^5.8.3"
+  }
+}

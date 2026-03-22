@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
 	"log/slog"
 	"os"
 	"strings"
@@ -19,6 +20,7 @@ import (
 	"charm.land/fantasy"
 	"charm.land/lipgloss/v2"
 	"github.com/legacy-ai/floyd/internal/agent"
+	"github.com/legacy-ai/floyd/internal/agent/ralph"
 	"github.com/legacy-ai/floyd/internal/agent/tools/mcp"
 	"github.com/legacy-ai/floyd/internal/config"
 	"github.com/legacy-ai/floyd/internal/csync"
@@ -80,15 +82,23 @@ func New(ctx context.Context, conn *sql.DB, cfg *config.Config) (*App, error) {
 	files := history.NewService(q, conn)
 	skipPermissionsRequests := cfg.Permissions != nil && cfg.Permissions.SkipRequests
 	var allowedTools []string
-	if cfg.Permissions != nil && cfg.Permissions.AllowedTools != nil {
-		allowedTools = cfg.Permissions.AllowedTools
+	profileDir := ""
+	if cfg.Permissions != nil {
+		if cfg.Permissions.AllowedTools != nil {
+			allowedTools = cfg.Permissions.AllowedTools
+		}
+		if cfg.Permissions.ProfileDir != "" {
+			profileDir = cfg.Permissions.ProfileDir
+		} else {
+			profileDir = filepath.Join(cfg.WorkingDir(), ".floyd", "permissions")
+		}
 	}
 
 	app := &App{
 		Sessions:    sessions,
 		Messages:    messages,
 		History:     files,
-		Permissions: permission.NewPermissionService(cfg.WorkingDir(), skipPermissionsRequests, allowedTools),
+		Permissions: permission.NewPermissionService(cfg.WorkingDir(), skipPermissionsRequests, allowedTools, profileDir),
 		FileTracker: filetracker.NewService(q),
 		LSPClients:  csync.NewMap[string, *lsp.Client](),
 
@@ -110,6 +120,11 @@ func New(ctx context.Context, conn *sql.DB, cfg *config.Config) (*App, error) {
 	go app.checkForUpdates(ctx)
 
 	go mcp.Initialize(ctx, app.Permissions, cfg)
+
+	// Install ralph loop slash commands into .floyd/commands/
+	if err := ralph.InstallCommands(cfg.Options.DataDirectory); err != nil {
+		slog.Warn("Failed to install ralph commands", "error", err)
+	}
 
 	// cleanup database upon app shutdown
 	app.cleanupFuncs = append(app.cleanupFuncs, conn.Close, mcp.Close)

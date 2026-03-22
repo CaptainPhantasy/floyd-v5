@@ -5,6 +5,7 @@
 package terminal
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -29,6 +30,20 @@ func NewSession(rows, cols int, cwd string) (*Session, error) {
 	shellPath := os.Getenv("SHELL")
 	if shellPath == "" {
 		shellPath = "/bin/sh"
+	}
+
+	// Validate shell exists before attempting to spawn
+	if _, err := exec.LookPath(shellPath); err != nil {
+		// Fall back to /bin/sh if the configured shell is not found
+		if shellPath != "/bin/sh" {
+			if _, fallbackErr := exec.LookPath("/bin/sh"); fallbackErr == nil {
+				shellPath = "/bin/sh"
+			} else {
+				return nil, fmt.Errorf("shell '%s' not found in PATH and fallback /bin/sh also unavailable", shellPath)
+			}
+		} else {
+			return nil, fmt.Errorf("shell '%s' not found in PATH", shellPath)
+		}
 	}
 
 	c := exec.Command(shellPath) // #nosec G204
