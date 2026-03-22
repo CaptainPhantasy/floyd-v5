@@ -654,3 +654,179 @@ func BenchmarkBuildSummaryPrompt(b *testing.B) {
 		})
 	}
 }
+
+func TestWrapInterruptedSessionPromptIdempotent(t *testing.T) {
+	base := "use ls to list files"
+	once := wrapInterruptedSessionPrompt(base)
+	twice := wrapInterruptedSessionPrompt(once)
+
+	require.Equal(t, once, twice)
+	require.Equal(t, 1, strings.Count(once, interruptedSessionPrefix))
+}
+
+func TestNextInterruptedSessionCall(t *testing.T) {
+	t.Run("increments and wraps once", func(t *testing.T) {
+		call := SessionAgentCall{Prompt: "hello", InterruptedRequeueCount: 0}
+		next, err := nextInterruptedSessionCall(call)
+		require.NoError(t, err)
+		require.Equal(t, 1, next.InterruptedRequeueCount)
+		require.True(t, strings.HasPrefix(strings.TrimSpace(next.Prompt), interruptedSessionPrefix))
+	})
+
+	t.Run("hard stops at max", func(t *testing.T) {
+		call := SessionAgentCall{Prompt: "hello", InterruptedRequeueCount: maxInterruptedRequeues}
+		_, err := nextInterruptedSessionCall(call)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "HARD STOP: Critical recursive drift detected")
+	})
+
+	t.Run("no recursive growth across cycles", func(t *testing.T) {
+		call := SessionAgentCall{Prompt: "use ls to list the files in the current directory", InterruptedRequeueCount: 0}
+		seenLengths := []int{}
+		for i := 0; i < maxInterruptedRequeues; i++ {
+			next, err := nextInterruptedSessionCall(call)
+			require.NoError(t, err)
+			require.Equal(t, 1, strings.Count(next.Prompt, interruptedSessionPrefix))
+			seenLengths = append(seenLengths, len(next.Prompt))
+			call = next
+		}
+		for i := 2; i < len(seenLengths); i++ {
+			require.Equal(t, seenLengths[1], seenLengths[i])
+		}
+		_, err := nextInterruptedSessionCall(call)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "HARD STOP: Critical recursive drift detected")
+	})
+}
+
+// TestNextInterruptedSessionCallPreservesFields verifies that
+// nextInterruptedSessionCall only mutates Prompt and InterruptedRequeueCount,
+// leaving every other field on the struct untouched.
+func TestNextInterruptedSessionCallPreservesFields(t *testing.T) {
+	temp := float64(0.7)
+	topP := float64(0.9)
+	topK := int64(40)
+	freq := float64(0.1)
+	pres := float64(0.2)
+
+	original := SessionAgentCall{
+		SessionID:               "session-42",
+		Prompt:                  "list files",
+		MaxOutputTokens:         4096,
+		Temperature:             &temp,
+		TopP:                    &topP,
+		TopK:                    &topK,
+		FrequencyPenalty:        &freq,
+		PresencePenalty:         &pres,
+		InterruptedRequeueCount: 0,
+	}
+
+	next, err := nextInterruptedSessionCall(original)
+	require.NoError(t, err)
+
+	require.Equal(t, original.SessionID, next.SessionID)
+	require.Equal(t, original.MaxOutputTokens, next.MaxOutputTokens)
+	require.Equal(t, original.Temperature, next.Temperature)
+	require.Equal(t, original.TopP, next.TopP)
+	require.Equal(t, original.TopK, next.TopK)
+	require.Equal(t, original.FrequencyPenalty, next.FrequencyPenalty)
+	require.Equal(t, original.PresencePenalty, next.PresencePenalty)
+
+	// Only these two should change.
+	require.Equal(t, 1, next.InterruptedRequeueCount)
+	require.NotEqual(t, original.Prompt, next.Prompt)
+}
+
+// TestWrapInterruptedSessionPromptVariants is a table-driven suite that covers
+// edge-case prompt shapes entering wrapInterruptedSessionPrompt.
+func TestWrapInterruptedSessionPromptVariants(t *testing.T) {
+	alreadyWrapped := fmt.Sprintf("%s `list files`", interruptedSessionPrefix)
+	prefixInBody := fmt.Sprintf("make sure you heed this note: %s list files", interruptedSessionPrefix)
+
+	cases := []struct {
+		name           string
+		input          string
+		wantIdempotent bool // true => wrap(wrap(x)) == wrap(x)
+		wantPrefixOnce bool // true => exactly one interruptedSessionPrefix in result
+	}{
+		{
+			name:           "fresh prompt",
+			input:          "list files in the repo",
+			wantIdempotent: true,
+			wantPrefixOnce: true,
+		},
+		{
+			name:           "already wrapped (replay from DB)",
+			input:          alreadyWrapped,
+			wantIdempotent: true,
+			// Already wrapped → wrapping again is a no-op, still exactly one prefix.
+			wantPrefixOnce: true,
+		},
+		{
+			name:           "prefix buried inside body (not at start)",
+			input:          prefixInBody,
+			wantIdempotent: true,
+			// Prefix is not at the START, so it gets wrapped → two occurrences total.
+			wantPrefixOnce: false,
+		},
+		{
+			name:           "prompt with leading whitespace",
+			input:          "   search for TODO comments",
+			wantIdempotent: true,
+			wantPrefixOnce: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			once := wrapInterruptedSessionPrompt(tc.input)
+			twice := wrapInterruptedSessionPrompt(once)
+
+			if tc.wantIdempotent {
+				require.Equal(t, once, twice, "expected wrap to be idempotent")
+			}
+			if tc.wantPrefixOnce {
+				require.Equal(t, 1, strings.Count(once, interruptedSessionPrefix))
+			}
+		})
+	}
+}
+
+// TestReplayPreWrappedPrompt simulates a session that was saved to the DB
+// mid-interruption (prompt already contains the wrap prefix) and is then
+// restored into a fresh SessionAgentCall (InterruptedRequeueCount=0).
+// Invariant: starting from a pre-wrapped prompt the system must not
+// double-wrap, the count must still reach the hard stop, and prompt length
+// must remain stable across all cycles.
+func TestReplayPreWrappedPrompt(t *testing.T) {
+	// Simulate a prompt as it would be stored after one prior interruption.
+	preWrapped := fmt.Sprintf("%s `investigate the failing test suite`", interruptedSessionPrefix)
+
+	call := SessionAgentCall{
+		SessionID:               "restored-session",
+		Prompt:                  preWrapped,
+		InterruptedRequeueCount: 0, // zero-value on restore, as if freshly loaded
+	}
+
+	baseLen := len(preWrapped)
+
+	for i := 0; i < maxInterruptedRequeues; i++ {
+		next, err := nextInterruptedSessionCall(call)
+		require.NoError(t, err, "should not hard-stop before reaching max, cycle %d", i)
+
+		// Prompt must NEVER grow beyond the original pre-wrapped length.
+		require.Equal(t, baseLen, len(next.Prompt),
+			"prompt length grew on cycle %d: idempotency guard failed", i)
+
+		// Exactly one prefix occurrence at all times.
+		require.Equal(t, 1, strings.Count(next.Prompt, interruptedSessionPrefix),
+			"multiple prefix occurrences on cycle %d", i)
+
+		call = next
+	}
+
+	// One more call must hit the hard stop.
+	_, err := nextInterruptedSessionCall(call)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "HARD STOP: Critical recursive drift detected")
+}

@@ -45,12 +45,21 @@ import (
 )
 
 const (
-	defaultSessionName = "Untitled Session"
+	defaultSessionName       = "Untitled Session"
+	interruptedSessionPrefix = "The previous session was interrupted because it got too long, the initial user request was:"
+	maxInterruptedRequeues   = 5
 
 	// Constants for auto-summarization thresholds
-	largeContextWindowThreshold = 200_000
-	largeContextWindowBuffer    = 20_000
-	smallContextWindowRatio     = 0.2
+	// FIXED: Increased from aggressive 20K/20% to more reasonable 8K/5%
+	// This prevents premature degradation while still protecting against context overflow
+	largeContextWindowBuffer = 8_000
+	smallContextWindowRatio  = 0.05
+
+	// isLargeContextWindow determines if the model's context window is
+	// considered "large" based on a dynamic threshold. Models with
+	// context windows >= 128k tokens are treated as large models,
+	// using a fixed buffer instead of a ratio-based threshold.
+	largeContextWindowCutoff = 128_000
 )
 
 //go:embed templates/title.md
@@ -63,16 +72,17 @@ var summaryPrompt []byte
 var thinkTagRegex = regexp.MustCompile(`<think>.*?</think>`)
 
 type SessionAgentCall struct {
-	SessionID        string
-	Prompt           string
-	ProviderOptions  fantasy.ProviderOptions
-	Attachments      []message.Attachment
-	MaxOutputTokens  int64
-	Temperature      *float64
-	TopP             *float64
-	TopK             *int64
-	FrequencyPenalty *float64
-	PresencePenalty  *float64
+	SessionID               string
+	Prompt                  string
+	ProviderOptions         fantasy.ProviderOptions
+	Attachments             []message.Attachment
+	MaxOutputTokens         int64
+	Temperature             *float64
+	TopP                    *float64
+	TopK                    *int64
+	FrequencyPenalty        *float64
+	PresencePenalty         *float64
+	InterruptedRequeueCount int
 }
 
 type SessionAgent interface {
@@ -90,6 +100,7 @@ type SessionAgent interface {
 	ClearQueue(sessionID string)
 	Summarize(context.Context, string, fantasy.ProviderOptions) error
 	SuggestFollowup(ctx context.Context, sessionID string) (string, error)
+	SuggestPrompt(ctx context.Context, sessionID, prompt string) (string, error)
 	Model() Model
 }
 
@@ -279,7 +290,109 @@ func (a *sessionAgent) Run(ctx context.Context, call SessionAgentCall) (*fantasy
 				prepared.Messages = append(prepared.Messages, userMessage.ToAIMessage()...)
 			}
 
+			// PHASE 1/2/3: Fast Token Estimation & Proactive Compaction Trigger
+			var totalEstTokens int
+			for _, msg := range prepared.Messages {
+				if msg.Role == fantasy.MessageRoleUser || msg.Role == fantasy.MessageRoleAssistant {
+					for _, part := range msg.Content {
+						if txt, ok := part.(fantasy.TextPart); ok {
+							totalEstTokens += len(txt.Text) / 4
+						}
+					}
+				} else if msg.Role == fantasy.MessageRoleTool {
+					for _, part := range msg.Content {
+						if tr, ok := part.(fantasy.ToolResultPart); ok {
+							if txt, ok := tr.Output.(fantasy.ToolResultOutputContentText); ok {
+								totalEstTokens += len(txt.Text) / 4
+							}
+						}
+					}
+				}
+			}
+
+			// Estimate context window boundary
+			cw := int(largeModel.CatwalkCfg.ContextWindow)
+			if largeModel.ModelCfg.ContextWindow > 0 {
+				cw = int(largeModel.ModelCfg.ContextWindow)
+			}
+			if cw <= 0 {
+				cw = 120000 // default fallback
+			}
+
+			// Hard-cap the effective context window to 200,000 tokens to ensure models
+			// with massive context windows (1M+) still compact and don't turn into train wrecks.
+			if cw > 200000 {
+				cw = 200000
+			}
+
+			maxAllowedTokens := int(float64(cw) * 0.85)
+
+			if totalEstTokens > maxAllowedTokens {
+				slog.Warn("Context bloat detected. Proactively compacting tool outputs.", "tokens", totalEstTokens)
+
+				// Phase 1: Aggressive compaction on older tool outputs (first 60%
+				// of history). Older results are less likely to be relevant and
+				// can be summarized more aggressively.
+				olderBound := len(prepared.Messages) * 60 / 100
+				for i := 0; i < olderBound; i++ {
+					if prepared.Messages[i].Role == fantasy.MessageRoleTool {
+						for j, part := range prepared.Messages[i].Content {
+							if tr, ok := part.(fantasy.ToolResultPart); ok {
+								if txt, ok := tr.Output.(fantasy.ToolResultOutputContentText); ok {
+									estTokens := len(txt.Text) / 4
+									if estTokens > 2000 {
+										truncLen := 4000 // ~1000 tokens — keep just enough for context
+										if truncLen > len(txt.Text) {
+											truncLen = len(txt.Text)
+										}
+										tr.Output = fantasy.ToolResultOutputContentText{
+											Text: fmt.Sprintf("[Older tool output compacted: %d bytes → %d bytes. Re-run the tool if you need full output.]\n\n%s\n... [COMPACTED]", len(txt.Text), truncLen, txt.Text[:truncLen]),
+										}
+										prepared.Messages[i].Content[j] = tr
+									}
+								}
+							}
+						}
+					}
+				}
+
+				// Phase 2: Standard truncation on recent tool outputs.
+				for i := olderBound; i < len(prepared.Messages); i++ {
+					if prepared.Messages[i].Role == fantasy.MessageRoleTool {
+						for j, part := range prepared.Messages[i].Content {
+							if tr, ok := part.(fantasy.ToolResultPart); ok {
+								if txt, ok := tr.Output.(fantasy.ToolResultOutputContentText); ok {
+									estTokens := len(txt.Text) / 4
+									if estTokens > 7500 {
+										truncLen := 30000 // approx 7500 tokens
+										if truncLen > len(txt.Text) {
+											truncLen = len(txt.Text)
+										}
+
+										originalLen := len(txt.Text)
+										newContent := fmt.Sprintf("\n[SYSTEM CAUTION: Original tool output string (%d bytes) exceeded session context limits and was automatically truncated to prevent silent LLM drops. If you need more info from this tool, write a script to grep/excerpt specific lines instead of reading raw.]\n\n%s\n... [TRUNCATED]", originalLen, txt.Text[:truncLen])
+
+										tr.Output = fantasy.ToolResultOutputContentText{Text: newContent}
+										prepared.Messages[i].Content[j] = tr
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
 			prepared.Messages = a.workaroundProviderMediaLimitations(prepared.Messages, largeModel)
+
+			// GLM Reasoning Persistence: GLM models discard <think> state between
+			// turns, so we inject a brief re-anchoring summary as the last system
+			// message to maintain multi-turn coherence. Only fires when there is
+			// actual conversation history to summarize.
+			if isGLMModel(largeModel.ModelCfg.Model) && len(prepared.Messages) > 2 {
+				if anchor := buildReasoningAnchor(prepared.Messages); anchor != "" {
+					prepared.Messages = append(prepared.Messages, fantasy.NewSystemMessage(anchor))
+				}
+			}
 
 			// Inject dynamic context as first user message (after system messages)
 			// This is the non-cacheable part that changes per-request
@@ -385,7 +498,12 @@ func (a *sessionAgent) Run(ctx context.Context, call SessionAgentCall) (*fantasy
 			return a.messages.Update(genCtx, *currentAssistant)
 		},
 		OnRetry: func(err *fantasy.ProviderError, delay time.Duration) {
-			// TODO: implement
+			slog.Warn("Provider retry triggered",
+				"session_id", call.SessionID,
+				"delay", delay.String(),
+				"status_code", err.StatusCode,
+				"error", err.Message,
+			)
 		},
 		OnToolCall: func(tc fantasy.ToolCallContent) error {
 			toolCall := message.ToolCall{
@@ -419,6 +537,20 @@ func (a *sessionAgent) Run(ctx context.Context, call SessionAgentCall) (*fantasy
 				finishReason = message.FinishReasonToolUse
 			}
 			currentAssistant.AddFinish(finishReason, "", "")
+
+			if finishReason == message.FinishReasonMaxTokens {
+				text := currentAssistant.Content().Text
+				openTags := strings.Count(text, "<think>")
+				closeTags := strings.Count(text, "</think>")
+
+				suffix := "\n\n[SYSTEM CAUTION: Generation interrupted due to token limit]"
+				if openTags > closeTags {
+					suffix = "\n</think>" + suffix
+				}
+				currentAssistant.AppendContent(suffix)
+				slog.Warn("Generation hit max tokens, auto-closing think tags if necessary to prevent context poisoning")
+			}
+
 			sessionLock.Lock()
 			defer sessionLock.Unlock()
 
@@ -432,19 +564,57 @@ func (a *sessionAgent) Run(ctx context.Context, call SessionAgentCall) (*fantasy
 				return sessionErr
 			}
 			currentSession = updatedSession
-			return a.messages.Update(genCtx, *currentAssistant)
+			// Use parent ctx for message persistence — genCtx may be cancelled
+			// by StopWhen before this completes, causing orphaned state.
+			return a.messages.Update(ctx, *currentAssistant)
 		},
 		StopWhen: []fantasy.StopCondition{
-			func(_ []fantasy.StepResult) bool {
+			func(steps []fantasy.StepResult) bool {
+				if len(steps) == 0 {
+					return false
+				}
+
+				// Use the LAST STEP's input tokens — this is the actual prompt
+				// size sent to the API, reflecting current context window usage.
+				// NOT cumulative session tokens, which grow forever and would
+				// trigger summarization after just a few turns.
+				lastStep := steps[len(steps)-1]
+				promptTokens := lastStep.Usage.InputTokens
+
+				// If the provider doesn't report input tokens (returns 0),
+				// fall back to estimating from total tokens minus output.
+				if promptTokens == 0 && lastStep.Usage.TotalTokens > 0 {
+					promptTokens = lastStep.Usage.TotalTokens - lastStep.Usage.OutputTokens
+				}
+				// If still 0, skip the check — we can't determine context pressure.
+				if promptTokens <= 0 {
+					return false
+				}
+
 				// Use override context window if set, otherwise use catwalk's value
 				cw := int64(largeModel.CatwalkCfg.ContextWindow)
 				if largeModel.ModelCfg.ContextWindow > 0 {
 					cw = largeModel.ModelCfg.ContextWindow
 				}
-				tokens := currentSession.CompletionTokens + currentSession.PromptTokens
-				remaining := cw - tokens
+				if cw <= 0 {
+					cw = 120000 // default fallback for unknown models
+				}
+
+				// Hard-cap the effective context window to 200,000 tokens to ensure models
+				// with massive context windows (1M+) still compact and don't turn into train wrecks.
+				if cw > 200000 {
+					cw = 200000
+				}
+
+				remaining := cw - promptTokens
+				slog.Debug("StopWhen check",
+					"prompt_tokens", promptTokens,
+					"context_window", cw,
+					"remaining", remaining,
+					"step", len(steps),
+				)
 				var threshold int64
-				if cw >= largeContextWindowThreshold {
+				if cw >= largeContextWindowCutoff {
 					threshold = largeContextWindowBuffer
 				} else {
 					threshold = int64(float64(cw) * smallContextWindowRatio)
@@ -459,6 +629,11 @@ func (a *sessionAgent) Run(ctx context.Context, call SessionAgentCall) (*fantasy
 	})
 
 	a.eventPromptResponded(call.SessionID, time.Since(startTime).Truncate(time.Second))
+
+	// PHASE 4: Reactive Crash Interceptor / Fail Loudly
+	if err == nil && currentAssistant != nil && len(currentAssistant.Parts) == 0 && len(currentAssistant.ToolCalls()) == 0 {
+		err = fmt.Errorf("CRITICAL HARNESS FAIL: The LLM Provider returned an empty response block, likely due to a silent context token drop, empty generation, or anti-bot panic. Harness intercepted silent drop")
+	}
 
 	if err != nil {
 		isCancelErr := errors.Is(err, context.Canceled)
@@ -567,14 +742,27 @@ func (a *sessionAgent) Run(ctx context.Context, call SessionAgentCall) (*fantasy
 		if summarizeErr := a.Summarize(genCtx, call.SessionID, call.ProviderOptions); summarizeErr != nil {
 			return nil, summarizeErr
 		}
-		// If the agent wasn't done...
-		if len(currentAssistant.ToolCalls()) > 0 {
+		// Only requeue if the agent was interrupted mid-work — i.e., it had
+		// tool calls that haven't received results yet. If all tool calls
+		// finished, the agent completed its task and requeuing would just
+		// start a pointless summarize→requeue loop.
+		hasUnfinishedToolCalls := false
+		for _, tc := range currentAssistant.ToolCalls() {
+			if !tc.Finished {
+				hasUnfinishedToolCalls = true
+				break
+			}
+		}
+		if hasUnfinishedToolCalls {
+			nextCall, requeueErr := nextInterruptedSessionCall(call)
+			if requeueErr != nil {
+				return nil, requeueErr
+			}
 			existing, ok := a.messageQueue.Get(call.SessionID)
 			if !ok {
 				existing = []SessionAgentCall{}
 			}
-			call.Prompt = fmt.Sprintf("The previous session was interrupted because it got too long, the initial user request was: `%s`", call.Prompt)
-			existing = append(existing, call)
+			existing = append(existing, nextCall)
 			a.messageQueue.Set(call.SessionID, existing)
 		}
 	}
@@ -637,10 +825,14 @@ func (a *sessionAgent) Summarize(ctx context.Context, sessionID string, opts fan
 
 	summaryPromptText := buildSummaryPrompt(currentSession.Todos)
 
+	// Cap summary output to prevent runaway summaries from eating the
+	// context window they're supposed to be freeing up.
+	var summaryMaxTokens int64 = 4096
 	resp, err := agent.Stream(genCtx, fantasy.AgentStreamCall{
 		Prompt:          summaryPromptText,
 		Messages:        aiMsgs,
 		ProviderOptions: opts,
+		MaxOutputTokens: &summaryMaxTokens,
 		PrepareStep: func(callContext context.Context, options fantasy.PrepareStepFunctionOptions) (_ context.Context, prepared fantasy.PrepareStepResult, err error) {
 			prepared.Messages = options.Messages
 			if systemPromptPrefix != "" {
@@ -700,11 +892,16 @@ func (a *sessionAgent) Summarize(ctx context.Context, sessionID string, opts fan
 	currentSession.SummaryMessageID = summaryMessage.ID
 	// CompletionTokens and PromptTokens already correctly updated by updateSessionUsage above
 	// Keep PromptTokens as determined by the actual summary generation usage, not set to 0
-	_, err = a.sessions.Save(genCtx, currentSession)
+	// Use parent ctx, not genCtx — genCtx is deferred-cancelled and could race the save.
+	_, err = a.sessions.Save(ctx, currentSession)
 	return err
 }
 
 func (a *sessionAgent) SuggestFollowup(ctx context.Context, sessionID string) (string, error) {
+	return a.SuggestPrompt(ctx, sessionID, "")
+}
+
+func (a *sessionAgent) SuggestPrompt(ctx context.Context, sessionID, prompt string) (string, error) {
 	if a.IsSessionBusy(sessionID) {
 		return "", ErrSessionBusy
 	}
@@ -712,30 +909,33 @@ func (a *sessionAgent) SuggestFollowup(ctx context.Context, sessionID string) (s
 	// Use small model for efficiency
 	smallModel := a.smallModel.Get()
 
-	currentSession, err := a.sessions.Get(ctx, sessionID)
-	if err != nil {
-		return "", fmt.Errorf("failed to get session: %w", err)
+	aiMsgs := []fantasy.Message{}
+	if sessionID != "" {
+		currentSession, err := a.sessions.Get(ctx, sessionID)
+		if err != nil {
+			return "", fmt.Errorf("failed to get session: %w", err)
+		}
+
+		msgs, err := a.getSessionMessages(ctx, currentSession)
+		if err != nil {
+			return "", err
+		}
+
+		// Get last 2-4 messages for context (limit to avoid excessive tokens)
+		startIdx := 0
+		if len(msgs) > 4 {
+			startIdx = len(msgs) - 4
+		}
+		recentMsgs := msgs[startIdx:]
+
+		aiMsgs, _ = a.preparePrompt(recentMsgs)
 	}
 
-	msgs, err := a.getSessionMessages(ctx, currentSession)
-	if err != nil {
-		return "", err
+	systemPrompt := "You are a helpful AI assistant. Suggest the most likely next user action or question. Use conversation context and any current draft text when provided. Reply with ONLY a single short prompt (5-14 words max), no quotes, no explanation, no preamble."
+	userPrompt := "What should the user ask or do next?"
+	if trimmed := strings.TrimSpace(prompt); trimmed != "" {
+		userPrompt = fmt.Sprintf("Current draft text:\n%s\n\nBased on this and any conversation context, suggest the best next prompt completion.", trimmed)
 	}
-
-	if len(msgs) == 0 {
-		return "", nil
-	}
-
-	// Get last 2-4 messages for context (limit to avoid excessive tokens)
-	startIdx := 0
-	if len(msgs) > 4 {
-		startIdx = len(msgs) - 4
-	}
-	recentMsgs := msgs[startIdx:]
-
-	aiMsgs, _ := a.preparePrompt(recentMsgs)
-
-	systemPrompt := "You are a helpful AI assistant. Based on the conversation history, suggest the most likely next user action or question. Reply with ONLY a single short prompt (5-10 words max), no quotes, no explanation, no preamble."
 
 	agent := fantasy.NewAgent(smallModel.Model,
 		fantasy.WithSystemPrompt(systemPrompt),
@@ -743,7 +943,7 @@ func (a *sessionAgent) SuggestFollowup(ctx context.Context, sessionID string) (s
 
 	var maxTokens int64 = 50
 	resp, err := agent.Generate(ctx, fantasy.AgentCall{
-		Prompt:          "What should the user ask or do next?",
+		Prompt:          userPrompt,
 		Messages:        aiMsgs,
 		MaxOutputTokens: &maxTokens,
 	})
@@ -760,7 +960,7 @@ func (a *sessionAgent) SuggestFollowup(ctx context.Context, sessionID string) (s
 	// Remove any quotes that might have been added
 	suggestion = strings.Trim(suggestion, `"'`)
 
-	slog.Debug("SuggestFollowup generated", "suggestion", suggestion, "length", len(suggestion))
+	slog.Debug("SuggestPrompt generated", "suggestion", suggestion, "length", len(suggestion), "has_prompt", strings.TrimSpace(prompt) != "")
 	return suggestion, nil
 }
 
@@ -1012,9 +1212,9 @@ func (a *sessionAgent) updateSessionUsage(model Model, session *session.Session,
 		session.Cost += cost
 	}
 
-	session.CompletionTokens = usage.OutputTokens
-	session.PromptTokens = usage.InputTokens
-	session.CacheReadTokens = usage.CacheReadTokens
+	session.CompletionTokens += usage.OutputTokens
+	session.PromptTokens += usage.InputTokens
+	session.CacheReadTokens += usage.CacheReadTokens
 }
 
 func (a *sessionAgent) Cancel(sessionID string) {
@@ -1270,5 +1470,89 @@ func buildSummaryPrompt(todos []session.Todo) string {
 		sb.WriteString("\nInclude these tasks and their statuses in your summary. ")
 		sb.WriteString("Instruct the resuming assistant to use the `todos` tool to continue tracking progress on these tasks.")
 	}
+	return sb.String()
+}
+
+func wrapInterruptedSessionPrompt(prompt string) string {
+	trimmedPrompt := strings.TrimSpace(prompt)
+	if strings.HasPrefix(trimmedPrompt, interruptedSessionPrefix) {
+		return prompt
+	}
+
+	return fmt.Sprintf("%s `%s`", interruptedSessionPrefix, prompt)
+}
+
+func nextInterruptedSessionCall(call SessionAgentCall) (SessionAgentCall, error) {
+	if call.InterruptedRequeueCount >= maxInterruptedRequeues {
+		return SessionAgentCall{}, fmt.Errorf("HARD STOP: Critical recursive drift detected")
+	}
+
+	call.Prompt = wrapInterruptedSessionPrompt(call.Prompt)
+	call.InterruptedRequeueCount++
+	return call, nil
+}
+
+// isGLMModel returns true for ZhiPu GLM models that lack native thinking
+// persistence across turns.
+func isGLMModel(modelID string) bool {
+	m := strings.ToLower(modelID)
+	return strings.Contains(m, "glm-")
+}
+
+// buildReasoningAnchor scans recent conversation history and constructs a
+// compact re-anchoring summary so GLM models can maintain coherence across
+// turns without native thinking persistence.
+func buildReasoningAnchor(messages []fantasy.Message) string {
+	var lastUserText, lastAssistantText string
+
+	for i := len(messages) - 1; i >= 0; i-- {
+		msg := messages[i]
+		switch msg.Role {
+		case fantasy.MessageRoleUser:
+			if lastUserText == "" {
+				for _, part := range msg.Content {
+					if txt, ok := part.(fantasy.TextPart); ok && txt.Text != "" {
+						lastUserText = txt.Text
+						break
+					}
+				}
+			}
+		case fantasy.MessageRoleAssistant:
+			if lastAssistantText == "" {
+				for _, part := range msg.Content {
+					if txt, ok := part.(fantasy.TextPart); ok && txt.Text != "" {
+						lastAssistantText = txt.Text
+						break
+					}
+				}
+			}
+		}
+
+		if lastUserText != "" && lastAssistantText != "" {
+			break
+		}
+	}
+
+	if lastUserText == "" {
+		return ""
+	}
+
+	var sb strings.Builder
+	sb.WriteString("[REASONING ANCHOR — previous turn context]\n")
+
+	if len(lastUserText) > 300 {
+		lastUserText = lastUserText[:300] + "..."
+	}
+	fmt.Fprintf(&sb, "User asked: %s\n", lastUserText)
+
+	if lastAssistantText != "" {
+		if len(lastAssistantText) > 300 {
+			lastAssistantText = lastAssistantText[:300] + "..."
+		}
+		fmt.Fprintf(&sb, "You responded: %s\n", lastAssistantText)
+	}
+
+	sb.WriteString("Continue from where you left off. Do not repeat completed work.\n")
+	sb.WriteString("[/REASONING ANCHOR]")
 	return sb.String()
 }

@@ -57,6 +57,7 @@ type Coordinator interface {
 	ClearQueue(sessionID string)
 	Summarize(context.Context, string) error
 	SuggestFollowup(ctx context.Context, sessionID string) (string, error)
+	SuggestPrompt(ctx context.Context, sessionID, prompt string) (string, error)
 	Model() Model
 	UpdateModels(ctx context.Context) error
 }
@@ -102,7 +103,8 @@ func NewCoordinator(
 		return nil, errors.New("coder agent not configured")
 	}
 
-	// TODO: make this dynamic when we support multiple agents
+	// Agent prompt template is currently fixed to the coder profile.
+	// When multi-agent dispatch is added, derive the template from the agent type.
 	promptTemplate, err := coderPrompt(prompt.WithWorkingDir(c.cfg.WorkingDir()))
 	if err != nil {
 		return nil, err
@@ -128,9 +130,9 @@ func (c *coordinator) Run(ctx context.Context, sessionID string, prompt string, 
 		return nil, fmt.Errorf("failed to update models: %w", err)
 	}
 
-	// v5.2.0: Dynamic Tool Discovery Registry Query
+	// v5.3.0: Dynamic Tool Discovery Registry Query
 	// Query the local MCP registry to map available sandboxed capabilities
-	slog.Info("v5.2.0: Performing dynamic tool discovery for sandboxed environment")
+	slog.Info("v5.3.0: Performing dynamic tool discovery for sandboxed environment")
 	mcpTools := tools.GetMCPTools(c.permissions, c.cfg.WorkingDir())
 	slog.Debug("Discovered sandboxed tools", "count", len(mcpTools))
 
@@ -303,9 +305,23 @@ func getProviderOptions(model Model, providerCfg config.ProviderConfig) fantasy.
 	case anthropic.Name:
 		_, hasThink := mergedOptions["thinking"]
 		if !hasThink && model.ModelCfg.Think {
+			// Resolve thinking budget: honour an explicit provider option override
+			// (set via model.provider_options.budget_tokens in config), otherwise
+			// fall back to a conservative 2000-token default.
+			const defaultThinkBudget = 2000
+			budget := defaultThinkBudget
+			if po := model.ModelCfg.ProviderOptions; po != nil {
+				if v, ok := po["budget_tokens"]; ok {
+					switch n := v.(type) {
+					case int:
+						budget = n
+					case float64:
+						budget = int(n)
+					}
+				}
+			}
 			mergedOptions["thinking"] = map[string]any{
-				// TODO: kujtim see if we need to make this dynamic
-				"budget_tokens": 2000,
+				"budget_tokens": budget,
 			}
 		}
 		parsed, err := anthropic.ParseOptions(mergedOptions)
@@ -468,6 +484,9 @@ func (c *coordinator) buildTools(ctx context.Context, agent config.Agent) ([]fan
 		tools.NewApplyPatchTool(c.cfg.WorkingDir()),
 		tools.NewSmartReplaceTool(c.cfg.WorkingDir()),
 		tools.NewGetActiveDiffTool(c.cfg.WorkingDir()),
+		tools.NewSpawnLabTool(c.cfg.WorkingDir()),
+		tools.NewExecuteLabTool(),
+		tools.NewTeardownLabTool(),
 	)
 
 	if c.lspClients.Len() > 0 {
@@ -509,7 +528,9 @@ func (c *coordinator) buildTools(ctx context.Context, agent config.Agent) ([]fan
 	return filteredTools, nil
 }
 
-// TODO: when we support multiple agents we need to change this so that we pass in the agent specific model config
+// buildAgentModels resolves the large and small language models for the current
+// coordinator. When multi-agent dispatch lands, this should accept an agent-
+// specific model config rather than reading from the global selected-model map.
 func (c *coordinator) buildAgentModels(ctx context.Context, isSubAgent bool) (Model, Model, error) {
 	largeModelCfg, ok := c.cfg.Models[config.SelectedModelTypeLarge]
 	if !ok {
@@ -532,10 +553,10 @@ func (c *coordinator) buildAgentModels(ctx context.Context, isSubAgent bool) (Mo
 
 	smallProviderCfg, ok := c.cfg.Providers.Get(smallModelCfg.Provider)
 	if !ok {
-		return Model{}, Model{}, errors.New("large model provider not configured")
+		return Model{}, Model{}, errors.New("small model provider not configured")
 	}
 
-	smallProvider, err := c.buildProvider(smallProviderCfg, largeModelCfg, true)
+	smallProvider, err := c.buildProvider(smallProviderCfg, smallModelCfg, true)
 	if err != nil {
 		return Model{}, Model{}, err
 	}
@@ -834,7 +855,7 @@ func (c *coordinator) buildProvider(providerCfg config.ProviderConfig, model con
 	case "google-vertex":
 		return c.buildGoogleVertexProvider(headers, providerCfg.ExtraParams)
 	case openaicompat.Name:
-		if providerCfg.ID == string(catwalk.InferenceProviderZAI) && (strings.Contains(model.Model, "glm-4.6") || strings.Contains(model.Model, "glm-5")) {
+		if (providerCfg.ID == string(catwalk.InferenceProviderZAI) || providerCfg.ID == "zhipu-coding") && (strings.Contains(model.Model, "glm-4.6") || strings.Contains(model.Model, "glm-4.7") || strings.Contains(model.Model, "glm-5")) {
 			if providerCfg.ExtraBody == nil {
 				providerCfg.ExtraBody = map[string]any{}
 			}
@@ -923,6 +944,10 @@ func (c *coordinator) Summarize(ctx context.Context, sessionID string) error {
 
 func (c *coordinator) SuggestFollowup(ctx context.Context, sessionID string) (string, error) {
 	return c.currentAgent.SuggestFollowup(ctx, sessionID)
+}
+
+func (c *coordinator) SuggestPrompt(ctx context.Context, sessionID, prompt string) (string, error) {
+	return c.currentAgent.SuggestPrompt(ctx, sessionID, prompt)
 }
 
 func (c *coordinator) isUnauthorized(err error) bool {
