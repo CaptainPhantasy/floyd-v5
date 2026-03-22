@@ -20,6 +20,7 @@ import (
 	"charm.land/fantasy"
 	"charm.land/lipgloss/v2"
 	"github.com/legacy-ai/floyd/internal/agent"
+	"github.com/legacy-ai/floyd/internal/agent/ralph"
 	"github.com/legacy-ai/floyd/internal/agent/tools/mcp"
 	"github.com/legacy-ai/floyd/internal/config"
 	"github.com/legacy-ai/floyd/internal/csync"
@@ -119,6 +120,11 @@ func New(ctx context.Context, conn *sql.DB, cfg *config.Config) (*App, error) {
 	go app.checkForUpdates(ctx)
 
 	go mcp.Initialize(ctx, app.Permissions, cfg)
+
+	// Install ralph loop slash commands into .floyd/commands/
+	if err := ralph.InstallCommands(cfg.Options.DataDirectory); err != nil {
+		slog.Warn("Failed to install ralph commands", "error", err)
+	}
 
 	// cleanup database upon app shutdown
 	app.cleanupFuncs = append(app.cleanupFuncs, conn.Close, mcp.Close)

@@ -413,6 +413,14 @@ func (c *Config) setDefaults(workingDir, dataDir string) {
 		}
 	}
 
+	// Add project-local extensibility/skills if it exists.
+	localSkills := filepath.Join(c.WorkingDir(), "extensibility", "skills")
+	if info, err := os.Stat(localSkills); err == nil && info.IsDir() {
+		if !slices.Contains(c.Options.SkillsPaths, localSkills) {
+			c.Options.SkillsPaths = append(c.Options.SkillsPaths, localSkills)
+		}
+	}
+
 	if str, ok := os.LookupEnv("FLOYD_DISABLE_PROVIDER_AUTO_UPDATE"); ok {
 		c.Options.DisableProviderAutoUpdate, _ = strconv.ParseBool(str)
 	}

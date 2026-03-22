@@ -34,6 +34,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/exp/charmtone"
 	"github.com/legacy-ai/floyd/internal/agent/hyper"
+	"github.com/legacy-ai/floyd/internal/agent/ralph"
 	"github.com/legacy-ai/floyd/internal/agent/tools"
 	"github.com/legacy-ai/floyd/internal/agent/tools/mcp"
 	"github.com/legacy-ai/floyd/internal/config"
@@ -102,6 +103,7 @@ type SessionAgent interface {
 	SuggestFollowup(ctx context.Context, sessionID string) (string, error)
 	SuggestPrompt(ctx context.Context, sessionID, prompt string) (string, error)
 	Model() Model
+	RalphLoop() *ralph.Loop
 }
 
 type Model struct {
@@ -126,6 +128,7 @@ type sessionAgent struct {
 
 	messageQueue   *csync.Map[string, []SessionAgentCall]
 	activeRequests *csync.Map[string, context.CancelFunc]
+	ralphLoop      *ralph.Loop
 }
 
 type SessionAgentOptions struct {
@@ -139,6 +142,7 @@ type SessionAgentOptions struct {
 	Sessions             session.Service
 	Messages             message.Service
 	Tools                []fantasy.AgentTool
+	DataDirectory        string // .floyd directory path, used for ralph loop state
 }
 
 func NewSessionAgent(
@@ -158,6 +162,7 @@ func NewSessionAgent(
 		isYolo:               opts.IsYolo,
 		messageQueue:         csync.NewMap[string, []SessionAgentCall](),
 		activeRequests:       csync.NewMap[string, context.CancelFunc](),
+		ralphLoop:            ralph.New(opts.DataDirectory),
 	}
 }
 
@@ -789,13 +794,33 @@ func (a *sessionAgent) Run(ctx context.Context, call SessionAgentCall) (*fantasy
 	cancel()
 
 	queuedMessages, ok := a.messageQueue.Get(call.SessionID)
-	if !ok || len(queuedMessages) == 0 {
-		return result, err
+	if ok && len(queuedMessages) > 0 {
+		// There are queued messages restart the loop.
+		firstQueuedMessage := queuedMessages[0]
+		a.messageQueue.Set(call.SessionID, queuedMessages[1:])
+		return a.Run(ctx, firstQueuedMessage)
 	}
-	// There are queued messages restart the loop.
-	firstQueuedMessage := queuedMessages[0]
-	a.messageQueue.Set(call.SessionID, queuedMessages[1:])
-	return a.Run(ctx, firstQueuedMessage)
+
+	// Ralph Loop: check if we should requeue the same prompt for another iteration.
+	if a.ralphLoop != nil && a.ralphLoop.IsActive() {
+		lastOutput := ""
+		if currentAssistant != nil {
+			lastOutput = currentAssistant.Content().Text
+		}
+		shouldContinue, nextPrompt, sysMsg := a.ralphLoop.Check(call.SessionID, lastOutput)
+		if shouldContinue {
+			slog.Info("Ralph loop: requeuing prompt", "prompt_len", len(nextPrompt), "system_msg", sysMsg)
+			ralphCall := SessionAgentCall{
+				SessionID:       call.SessionID,
+				Prompt:          fmt.Sprintf("[RALPH LOOP] %s\n\n%s", sysMsg, nextPrompt),
+				MaxOutputTokens: call.MaxOutputTokens,
+				ProviderOptions: call.ProviderOptions,
+			}
+			return a.Run(ctx, ralphCall)
+		}
+	}
+
+	return result, err
 }
 
 func (a *sessionAgent) Summarize(ctx context.Context, sessionID string, opts fantasy.ProviderOptions) error {
@@ -1337,6 +1362,10 @@ func (a *sessionAgent) SetDynamicContext(dynamicContext string) {
 
 func (a *sessionAgent) Model() Model {
 	return a.largeModel.Get()
+}
+
+func (a *sessionAgent) RalphLoop() *ralph.Loop {
+	return a.ralphLoop
 }
 
 // convertToToolResult converts a fantasy tool result to a message tool result.
