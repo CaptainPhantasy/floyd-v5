@@ -39,8 +39,8 @@ func newHeader(com *common.Common) *header {
 		com: com,
 	}
 	t := com.Styles
-	h.compactLogo = t.Header.Charm.Render("LEGACY AI™") + " " +
-		styles.ApplyBoldForegroundGrad(t, "FLOYD", t.Secondary, t.Primary) + " "
+	h.compactLogo = t.Header.Brand.Render("Legacy AI") + " " +
+		styles.ApplyBoldForegroundGrad(t, "/ Floyd's Labs", t.Secondary, t.Primary) + " "
 	return h
 }
 

@@ -432,6 +432,23 @@ func (a *sessionAgent) Run(ctx context.Context, call SessionAgentCall) (*fantasy
 				prepared.Messages = append([]fantasy.Message{fantasy.NewSystemMessage(promptPrefix)}, prepared.Messages...)
 			}
 
+			// Inject protocol kernel as a system message immediately after
+			// promptPrefix (if present) and before the role template. The
+			// role template already carries the cache_control breakpoint
+			// (set above), so the entire static prefix (kernel + role) is
+			// cached as a single block. Dynamic context (env, supercache,
+			// reasoning anchors) follows after the breakpoint.
+			{
+				kernelMsg := fantasy.NewSystemMessage(string(protocolKernelTmpl))
+				kernelMsg.ProviderOptions = nil // no cache control — breakpoint is on the role template
+				insertAt := 0
+				if promptPrefix != "" {
+					insertAt = 1
+				}
+				prepared.Messages = append(prepared.Messages[:insertAt], append([]fantasy.Message{kernelMsg}, prepared.Messages[insertAt:]...)...)
+				slog.Debug("Protocol kernel injected", "position", insertAt, "total_messages", len(prepared.Messages))
+			}
+
 			var assistantMsg message.Message
 			assistantMsg, err = a.messages.Create(callContext, call.SessionID, message.CreateMessageParams{
 				Role:     message.Assistant,

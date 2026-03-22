@@ -34,7 +34,7 @@ type ThemePreset struct {
 	// Logo gradient endpoints.
 	LogoColorA color.Color
 	LogoColorB color.Color
-	LogoCharm  color.Color
+	LogoBrand  color.Color
 	LogoField  color.Color
 
 	// Status accent overrides (nil = keep default).
@@ -70,7 +70,7 @@ func init() {
 			BorderFocus: mustHex("#FF5F6D"),
 			LogoColorA:  mustHex("#FF5F6D"),
 			LogoColorB:  mustHex("#FFC371"),
-			LogoCharm:   mustHex("#FFC371"),
+			LogoBrand:   mustHex("#FFC371"),
 			LogoField:   mustHex("#FF5F6D"),
 			Green:       mustHex("#FFB347"),
 			GreenDark:   mustHex("#FF8C42"),
@@ -87,7 +87,7 @@ func init() {
 			BorderFocus: mustHex("#00CED1"),
 			LogoColorA:  mustHex("#00FFFF"),
 			LogoColorB:  mustHex("#0055FF"),
-			LogoCharm:   mustHex("#00FFFF"),
+			LogoBrand:   mustHex("#00FFFF"),
 			LogoField:   mustHex("#0055FF"),
 			Green:       mustHex("#00E5CC"),
 			GreenDark:   mustHex("#00B89C"),
@@ -104,7 +104,7 @@ func init() {
 			BorderFocus: mustHex("#39FF14"),
 			LogoColorA:  mustHex("#39FF14"),
 			LogoColorB:  mustHex("#006400"),
-			LogoCharm:   mustHex("#00FF41"),
+			LogoBrand:   mustHex("#00FF41"),
 			LogoField:   mustHex("#39FF14"),
 			Green:       mustHex("#39FF14"),
 			GreenDark:   mustHex("#228B22"),
@@ -132,7 +132,7 @@ func (s *Styles) initThemes() {
 		BorderFocus: s.BorderColor,
 		LogoColorA:  s.LogoTitleColorA,
 		LogoColorB:  s.LogoTitleColorB,
-		LogoCharm:   s.LogoCharmColor,
+		LogoBrand:   s.LogoBrandColor,
 		LogoField:   s.LogoFieldColor,
 		Green:       s.Green,
 		GreenDark:   s.GreenDark,
@@ -182,12 +182,12 @@ func (s *Styles) ApplyTheme(t ThemePreset) {
 	// --- Logo ---
 	s.LogoTitleColorA = t.LogoColorA
 	s.LogoTitleColorB = t.LogoColorB
-	s.LogoCharmColor = t.LogoCharm
+	s.LogoBrandColor = t.LogoBrand
 	s.LogoFieldColor = t.LogoField
 	s.LogoVersionColor = t.Primary
 
 	// --- Header ---
-	s.Header.Charm = lipgloss.NewStyle().Foreground(t.Secondary)
+	s.Header.Brand = lipgloss.NewStyle().Foreground(t.Secondary)
 	s.Header.Diagonals = lipgloss.NewStyle().Foreground(t.Primary)
 
 	// --- Borders ---

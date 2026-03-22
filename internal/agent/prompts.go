@@ -25,6 +25,9 @@ var initializePromptTmpl []byte
 //go:embed templates/floyd_protocol.md.tpl
 var floydProtocolTmpl []byte
 
+//go:embed templates/protocol_kernel.md.tpl
+var protocolKernelTmpl []byte
+
 func coderPrompt(opts ...prompt.Option) (*prompt.Prompt, error) {
 	// Select template based on runtime profile, with binary-name fallback for compatibility.
 	var tmpl []byte

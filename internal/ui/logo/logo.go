@@ -31,7 +31,7 @@ type Opts struct {
 	FieldColor   color.Color // diagonal lines
 	TitleColorA  color.Color // left gradient ramp point
 	TitleColorB  color.Color // right gradient ramp point
-	CharmColor   color.Color // Charm™ text color
+	BrandColor   color.Color // "Legacy AI / Floyd's Labs" text color
 	VersionColor color.Color // Version text color
 	Width        int         // width of the rendered logo, used for truncation
 }
@@ -122,7 +122,7 @@ func Render(s *styles.Styles, version string, compact bool, o Opts) string {
 	}
 	version = ansi.Truncate(version, maxVersionWidth, "…") // truncate version if too long.
 	gap := max(0, floydWidth-lipgloss.Width(legacyai)-lipgloss.Width(version))
-	metaRow := fg(o.CharmColor, legacyai) + strings.Repeat(" ", gap) + fg(o.VersionColor, version)
+	metaRow := fg(o.BrandColor, legacyai) + strings.Repeat(" ", gap) + fg(o.VersionColor, version)
 
 	// Join the meta row and FLOYD title.
 	floyd = strings.TrimSpace(metaRow + "\n" + floyd)
@@ -193,7 +193,7 @@ func isSuperFloyd() bool {
 // SmallRender renders a smaller version of the Floyd logo, suitable for
 // smaller windows or sidebar usage.
 func SmallRender(t *styles.Styles, width int) string {
-	title := t.Base.Foreground(t.Secondary).Render("LEGACY AI™")
+	title := t.Base.Foreground(t.Secondary).Render("Legacy AI / Floyd's Labs")
 	brandName := "FLOYD"
 	if isSuperFloyd() {
 		// Detect if we should show "BEAST MODE" or "SUPERFLOYD"
@@ -221,7 +221,7 @@ func SidebarRender(s *styles.Styles, width int, o Opts) string {
 		return lipgloss.NewStyle().Foreground(c).Render(str)
 	}
 
-	legacyai := fg(o.CharmColor, "Legacy AI")
+	legacyai := fg(o.BrandColor, "Legacy AI")
 
 	var artLines []string
 	if isSuperFloyd() {
