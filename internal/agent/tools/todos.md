@@ -88,3 +88,25 @@ If blocked:
 - One task in_progress at a time keeps work focused
 - Update immediately after state changes for accurate tracking
 </tips>
+
+
+## Closing the List
+
+When ALL tasks are done and the work is finished, replace the entire list with an empty one:
+```json
+{"op": "replace", "phases": []}
+```
+This removes the todo list from the UI entirely, signaling completion.
+
+Close the list when:
+- All planned tasks are completed
+- All follow-up tasks discovered during work are also done
+- The original request has been fully satisfied
+
+## Removing Tasks Entirely
+
+Tasks that become irrelevant (e.g., blocked by an earlier failure, no longer needed) should be removed using `abandoned`:
+```json
+{"op": "update", "id": "task-3", "status": "abandoned"}
+```
+This keeps the list clean and focused on relevant work.

@@ -63,6 +63,9 @@ const (
 	largeContextWindowCutoff = 128_000
 )
 
+// ErrNoSuggestion is returned when no suggestion could be generated.
+var ErrNoSuggestion = errors.New("no suggestion generated")
+
 //go:embed templates/title.md
 var titlePrompt []byte
 
@@ -995,7 +998,7 @@ func (a *sessionAgent) SuggestPrompt(ctx context.Context, sessionID, prompt stri
 	}
 
 	if resp == nil || resp.Response.Content.Text() == "" {
-		return "", nil
+		return "", ErrNoSuggestion
 	}
 
 	suggestion := strings.TrimSpace(resp.Response.Content.Text())

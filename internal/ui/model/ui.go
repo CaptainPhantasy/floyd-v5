@@ -28,6 +28,7 @@ import (
 	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/ultraviolet/screen"
 	"github.com/charmbracelet/x/editor"
+	"github.com/legacy-ai/floyd/internal/agent"
 	"github.com/legacy-ai/floyd/internal/agent/tools/mcp"
 	"github.com/legacy-ai/floyd/internal/app"
 	"github.com/legacy-ai/floyd/internal/commands"
@@ -2889,8 +2890,22 @@ func (m *UI) updateCommandSuggestion() {
 		return
 	}
 	value := m.textarea.Value()
-	if strings.Contains(value, "\n") {
-		m.commandSuggestion = ""
+	// Allow single-line suggestions even with multi-line editor content
+	// Only clear suggestion if it spans multiple lines
+	if m.commandSuggestion != "" && strings.Contains(m.commandSuggestion, "\n") {
+		// Multi-line suggestion - truncate to first line if editor is single line
+		firstLine := strings.Split(m.commandSuggestion, "\n")[0]
+		if !strings.Contains(value, "\n") {
+			m.commandSuggestion = firstLine
+		}
+		return
+	}
+	// Also check AI suggestion for multi-line
+	if m.aiSuggestion != "" && strings.Contains(m.aiSuggestion, "\n") {
+		firstLine := strings.Split(m.aiSuggestion, "\n")[0]
+		if !strings.Contains(value, "\n") {
+			m.commandSuggestion = firstLine
+		}
 		return
 	}
 
@@ -2941,7 +2956,7 @@ func (m *UI) commandSuggestionSuffix() string {
 	}
 	cur := m.textarea.Cursor()
 	valueRunes := []rune(value)
-	if cur == nil || cur.Y != 0 || cur.X != len(valueRunes) {
+	if cur == nil || cur.Y != 0 || cur.X > len(valueRunes) {
 		return ""
 	}
 	if !strings.HasPrefix(strings.ToLower(m.commandSuggestion), strings.ToLower(value)) {
@@ -3059,7 +3074,9 @@ func (m *UI) sendMessage(content string, attachments ...message.Attachment) tea.
 
 		// Generate followup suggestion asynchronously after successful response
 		// Skip in test environment to avoid VCR cassette mismatches
-		if !testing.Testing() {
+		// Allow override via environment variable for testing
+		skipSuggestion := testing.Testing() && os.Getenv("FLOYD_ENABLE_TEST_SUGGESTIONS") == ""
+		if !skipSuggestion {
 			suggestion, err := m.com.App.AgentCoordinator.SuggestFollowup(ctx, sessionID)
 			if err == nil && suggestion != "" {
 				return aiSuggestionMsg(suggestion)
@@ -3087,6 +3104,9 @@ func (m *UI) requestSuggestion(prompt string) tea.Cmd {
 		if err != nil {
 			if errors.Is(err, context.Canceled) || errors.Is(err, permission.ErrorPermissionDenied) {
 				return nil
+			}
+			if errors.Is(err, agent.ErrNoSuggestion) {
+				return util.InfoMsg{Type: util.InfoTypeInfo, Msg: "No suggestion available right now."}
 			}
 			return util.InfoMsg{Type: util.InfoTypeError, Msg: err.Error()}
 		}
