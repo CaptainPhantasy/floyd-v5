@@ -1,0 +1,9 @@
+{
+  "runId": "0d08cc1b",
+  "agent": "crew-planner",
+  "index": 0,
+  "exitCode": 1,
+  "durationMs": 4085518,
+  "tokens": 11464,
+  "truncated": false
+}

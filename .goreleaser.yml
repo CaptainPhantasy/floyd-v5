@@ -4,19 +4,11 @@ version: 2
 
 project_name: floyd
 
-includes:
-  - from_url:
-      url: legacy-ai/meta/main/notarize.yaml
-
 metadata:
   mod_timestamp: "{{ .CommitTimestamp }}"
   license: "FSL-1.1-MIT"
-  homepage: "https://charm.sh/floyd"
   description: "A powerful terminal-based AI assistant for developers, providing intelligent coding assistance directly in your terminal."
   full_description: "A powerful terminal-based AI assistant for developers, providing intelligent coding assistance directly in your terminal."
-  maintainers:
-    - "kujtimiihoxha <kujtim@charm.sh>"
-    - "caarlos0 <carlos@charm.sh>" # for aur
 
 nightly:
   publish_release: true
@@ -101,8 +93,8 @@ aur_sources:
     disable: "{{ with .Prerelease }}true{{ end }}"
     git_url: "ssh://aur@aur.archlinux.org/floyd.git"
     commit_author:
-      name: "Charm"
-      email: "charmcli@users.noreply.github.com"
+      name: "Floyd"
+      email: "noreply@floyd.dev"
     makedepends:
       - go
       - git
@@ -145,8 +137,8 @@ aurs:
     disable: "{{ with .Prerelease }}true{{ end }}"
     git_url: "ssh://aur@aur.archlinux.org/floyd-bin.git"
     commit_author:
-      name: "Charm"
-      email: "charmcli@users.noreply.github.com"
+      name: "Floyd"
+      email: "noreply@floyd.dev"
     provides:
       - floyd
     conflicts:
@@ -180,7 +172,7 @@ aurs:
 
 furies:
   - disable: "{{ if (or .Prerelease .IsNightly) }}true{{ end }}"
-    account: "{{ with .Env.FURY_TOKEN }}charmcli{{ else }}{{ end }}"
+    account: "{{ with .Env.FURY_TOKEN }}floyd{{ else }}{{ end }}"
     secret_name: FURY_TOKEN
 
 brews:
@@ -190,8 +182,8 @@ brews:
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     skip_upload: "{{ with .Prerelease }}true{{ end }}"
     commit_author:
-      name: "Charm"
-      email: "charmcli@users.noreply.github.com"
+      name: "Floyd"
+      email: "noreply@floyd.dev"
     goarm: 7
     extra_install: |-
       bash_completion.install "completions/{{ .ProjectName }}.bash" => "{{ .ProjectName }}"
@@ -206,8 +198,8 @@ scoops:
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     skip_upload: "{{ with .Prerelease }}true{{ end }}"
     commit_author:
-      name: "Charm"
-      email: "charmcli@users.noreply.github.com"
+      name: "Floyd"
+      email: "noreply@floyd.dev"
 
 npms:
   - name: "@legacyai/floyd"
@@ -265,8 +257,8 @@ nix:
       name: nur
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     commit_author:
-      name: "Charm"
-      email: "charmcli@users.noreply.github.com"
+      name: "Floyd"
+      email: "noreply@floyd.dev"
     license: fsl11Mit
     formatter: nixfmt
     skip_upload: "{{ with .Prerelease }}true{{ end }}"
@@ -277,13 +269,13 @@ nix:
 winget:
   - publisher: legacy-ai
     copyright: Legacy AI, Inc
-    publisher_url: https://charm.land
+    publisher_url: https://floyd.dev
     release_notes_url: "https://github.com/legacy-ai/floyd/releases/tag/{{.Tag}}"
     license_url: https://github.com/legacy-ai/floyd/blob/main/LICENSE.md
     skip_upload: "{{ with .Prerelease }}true{{ end }}"
     commit_author:
-      name: "Charm"
-      email: "charmcli@users.noreply.github.com"
+      name: "Floyd"
+      email: "noreply@floyd.dev"
     repository:
       owner: "legacy-ai"
       name: winget-pkgs
@@ -344,6 +336,4 @@ changelog:
 
 release:
   prerelease: auto
-  footer:
-    from_url:
-      url: https://raw.githubusercontent.com/legacy-ai/meta/main/footer.md
+  footer: ""

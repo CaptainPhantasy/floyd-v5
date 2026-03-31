@@ -1,0 +1,9 @@
+{"ts":"2026-03-23T16:02:56.576Z","type":"join","agent":"DarkEagle"}
+{"ts":"2026-03-23T16:30:58.119Z","type":"edit","agent":"DarkEagle","target":"/Users/douglastalley/.floyd/agent/scaffolds/FLOYD.md"}
+{"ts":"2026-03-23T19:02:43.678Z","type":"leave","agent":"DarkEagle"}
+{"ts":"2026-03-24T07:15:30.045Z","type":"join","agent":"LoudMoon"}
+{"ts":"2026-03-24T07:16:12.624Z","type":"plan.start","agent":"LoudMoon","target":"(prompt)","preview":"max passes 1"}
+{"ts":"2026-03-24T07:16:12.625Z","type":"plan.pass.start","agent":"LoudMoon","target":"(prompt)","preview":"pass 1/1"}
+{"ts":"2026-03-24T07:16:19.057Z","type":"join","agent":"LoudPhoenix"}
+{"ts":"2026-03-24T07:18:51.600Z","type":"plan.cancel","agent":"LoudMoon"}
+{"ts":"2026-03-24T08:24:18.118Z","type":"leave","agent":"LoudMoon"}

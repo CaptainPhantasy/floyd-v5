@@ -21,6 +21,10 @@ func goFilesBuildCheck(filePath, workingDir string) string {
 		return ""
 	}
 
+	if os.Getenv("FLOYD_DISABLE_BUILD_CHECK") != "" {
+		return ""
+	}
+
 	// Determine the Go module root by walking up from the file.
 	moduleRoot := findGoModRoot(filePath, workingDir)
 	if moduleRoot == "" {

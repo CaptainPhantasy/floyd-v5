@@ -52,6 +52,7 @@ func TestCoderAgent(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("skipping on windows for now")
 	}
+	t.Setenv("FLOYD_DISABLE_BUILD_CHECK", "1")
 
 	for _, pair := range modelPairs {
 		t.Run(pair.name, func(t *testing.T) {

@@ -100,6 +100,16 @@ func (c *coordinator) agentTool(ctx context.Context) (fantasy.AgentTool, error) 
 			if err != nil {
 				return fantasy.ToolResponse{}, fmt.Errorf("error saving parent session: %s", err)
 			}
-			return fantasy.NewTextResponse(result.Response.Content.Text()), nil
+			// Cap sub-agent response before returning to parent agent.
+			// The sub-agent may use a smaller model with a different context window,
+			// and its full output could exhaust the parent's context budget.
+			// 20,000 chars (~5,000 tokens) is enough for substantial results while
+			// leaving room for the parent's own conversation history.
+			const maxSubAgentResponse = 20000
+			responseText := result.Response.Content.Text()
+			if len(responseText) > maxSubAgentResponse {
+				responseText = responseText[:maxSubAgentResponse] + "\n\n... [Sub-agent output truncated from " + fmt.Sprintf("%d", len(responseText)) + " bytes. Ask the sub-agent to be more concise or break the task into smaller pieces.]"
+			}
+			return fantasy.NewTextResponse(responseText), nil
 		}), nil
 }
