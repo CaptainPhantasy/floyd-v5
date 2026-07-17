@@ -304,24 +304,39 @@ func getProviderOptions(model Model, providerCfg config.ProviderConfig) fantasy.
 		}
 	case anthropic.Name:
 		_, hasThink := mergedOptions["thinking"]
-		if !hasThink && model.ModelCfg.Think {
-			// Resolve thinking budget: honour an explicit provider option override
-			// (set via model.provider_options.budget_tokens in config), otherwise
-			// fall back to a conservative 2000-token default.
-			const defaultThinkBudget = 2000
-			budget := defaultThinkBudget
-			if po := model.ModelCfg.ProviderOptions; po != nil {
-				if v, ok := po["budget_tokens"]; ok {
-					switch n := v.(type) {
-					case int:
-						budget = n
-					case float64:
-						budget = int(n)
+		if !hasThink {
+			if model.ModelCfg.Think {
+				// Resolve thinking budget: honour an explicit provider option override
+				// (set via model.provider_options.budget_tokens in config), otherwise
+				// fall back to a conservative 2000-token default.
+				const defaultThinkBudget = 2000
+				budget := defaultThinkBudget
+				if po := model.ModelCfg.ProviderOptions; po != nil {
+					if v, ok := po["budget_tokens"]; ok {
+						switch n := v.(type) {
+						case int:
+							budget = n
+						case float64:
+							budget = int(n)
+						}
 					}
 				}
-			}
-			mergedOptions["thinking"] = map[string]any{
-				"budget_tokens": budget,
+				mergedOptions["thinking"] = map[string]any{
+					"budget_tokens": budget,
+				}
+			} else if model.ModelCfg.ReasoningEffort != "" {
+				// Map reasoning_effort to Anthropic's thinking.budget_tokens.
+				// Anthropic ignores reasoning_effort directly; translate here.
+				budgetByEffort := map[string]int{
+					"low":    2000,
+					"medium": 6000,
+					"high":   16000,
+				}
+				if budget, ok := budgetByEffort[model.ModelCfg.ReasoningEffort]; ok {
+					mergedOptions["thinking"] = map[string]any{
+						"budget_tokens": budget,
+					}
+				}
 			}
 		}
 		parsed, err := anthropic.ParseOptions(mergedOptions)

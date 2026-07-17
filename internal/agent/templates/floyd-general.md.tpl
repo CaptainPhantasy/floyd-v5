@@ -31,3 +31,12 @@ Built-in tools: `spawn_lab` (boot VM), `execute_in_lab` (run commands), `migrate
 {{.Content}}
 {{end}}
 {{end}}
+
+## SURGICAL mode
+When a user starts a task with `SURGICAL`, apply these constraints:
+
+- Limit the change to the smallest diff that resolves the stated symptom.
+- Record the pre-change behavior before editing.
+- Run focused verification after the patch.
+- Report the exact changed files, remaining risk, and rollback command.
+- Stop for renewed scope approval if the required patch expands beyond the stated symptom boundary.

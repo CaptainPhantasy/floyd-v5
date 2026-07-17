@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "gates": [
+    {
+      "name": "profile-test",
+      "command": ["go", "test", ".", "-run", "TestProfileHandlerIsIsolated", "-count=1"],
+      "required": true
+    },
+    {
+      "name": "agent-recovery-tests",
+      "command": ["go", "test", "./internal/agent", "-run", "TestAnthropicReasoningEffortMapsToThinkingBudget|TestHardening", "-count=1"],
+      "required": true
+    },
+    {
+      "name": "go-vet",
+      "command": ["go", "vet", "./..."],
+      "required": true
+    },
+    {
+      "name": "go-build",
+      "command": ["go", "build", "./..."],
+      "required": true
+    }
+  ],
+  "include": [
+    ".proofline.json",
+    "main.go",
+    "main_test.go",
+    "internal/agent/coordinator.go",
+    "internal/agent/coordinator_recovery_test.go",
+    "internal/agent/templates/floyd-general.md.tpl"
+  ],
+  "deny": [
+    ".env",
+    ".env.*",
+    "*.pem",
+    "*.key",
+    ".git/**",
+    ".harness/**",
+    ".pi/**",
+    ".omp/**",
+    ".supercache/**",
+    "README.FLOYD_SURGICAL.md"
+  ],
+  "baseBranch": "main",
+  "publish": true,
+  "allowLocalRemote": false
+}

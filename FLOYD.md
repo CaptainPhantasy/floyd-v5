@@ -1,5 +1,8 @@
 # Floyd — General Purpose Operational Agent
 
+**Version:** 1.7.1
+**Governance:** .supercache/ v1.7.1
+
 > v5.3.0 | Go | MCP | TUI
 
 ## Quick Reference
