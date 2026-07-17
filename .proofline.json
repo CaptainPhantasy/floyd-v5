@@ -24,6 +24,7 @@
   ],
   "include": [
     ".proofline.json",
+    "README.FLOYD_STABILITY.md",
     "main.go",
     "main_test.go",
     "internal/agent/coordinator.go",

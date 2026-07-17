@@ -9,18 +9,27 @@ import (
 
 func TestAnthropicReasoningEffortMapsToThinkingBudget(t *testing.T) {
 	tests := []struct {
-		effort string
-		want   int64
+		name     string
+		effort   string
+		override any
+		want     int64
 	}{
-		{effort: "low", want: 2000},
-		{effort: "medium", want: 6000},
-		{effort: "high", want: 16000},
+		{name: "low", effort: "low", want: 2000},
+		{name: "medium", effort: "medium", want: 6000},
+		{name: "medium alias", effort: "MED", want: 6000},
+		{name: "high", effort: "high", want: 16000},
+		{name: "high alias", effort: "MAX", want: 16000},
+		{name: "explicit override", effort: "high", override: 4096, want: 4096},
 	}
 
 	for _, test := range tests {
-		t.Run(test.effort, func(t *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
+			modelConfig := config.SelectedModel{ReasoningEffort: test.effort}
+			if test.override != nil {
+				modelConfig.ProviderOptions = map[string]any{"budget_tokens": test.override}
+			}
 			options := getProviderOptions(Model{
-				ModelCfg: config.SelectedModel{ReasoningEffort: test.effort},
+				ModelCfg: modelConfig,
 			}, config.ProviderConfig{Type: anthropic.Name})
 
 			got, ok := options[anthropic.Name].(*anthropic.ProviderOptions)

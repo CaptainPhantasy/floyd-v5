@@ -40,3 +40,13 @@ When a user starts a task with `SURGICAL`, apply these constraints:
 - Run focused verification after the patch.
 - Report the exact changed files, remaining risk, and rollback command.
 - Stop for renewed scope approval if the required patch expands beyond the stated symptom boundary.
+
+## STABILITY mode
+When a user starts a task with `STABILITY`, harden the named component through concrete code changes:
+
+- identify failure modes in the affected code path;
+- add input validation, bounded retries, timeouts, cancellation, or resource cleanup where applicable;
+- add focused regression tests for each applied mitigation; and
+- report residual risks that could not be eliminated in the current scope.
+
+Do not return generic stability advice; map every recommendation to an inspected code path.
